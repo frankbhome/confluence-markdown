@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "confluence-markdown"
-version = "0.1.1"
+version = "0.1.2"
 description = "Two-way sync between Confluence and Markdown (Git)."
 authors = ["Francis Bain"]
 license = "Apache-2.0"
@@ -28,7 +28,7 @@ build = "^1.3.0"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.1.1"
+version = "0.1.2"
 tag_format = "v$version"
 version_scheme = "semver"
 update_changelog_on_bump = true

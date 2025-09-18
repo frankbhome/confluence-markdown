@@ -1,5 +1,3 @@
-def main():
-    print("confluence-markdown OK")
+"""Top-level package for confluence-markdown."""
 
-    if __name__ == "__main__":
-        main()
+__all__ = []
