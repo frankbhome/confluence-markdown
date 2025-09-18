@@ -1,0 +1,42 @@
+[tool.poetry]
+name = "confluence-markdown"
+version = "0.1.1"
+description = "Two-way sync between Confluence and Markdown (Git)."
+authors = ["Francis Bain"]
+license = "Apache-2.0"
+readme = "README.md"
+packages = [
+  { include = "confluence_markdown", from = "src" }
+]
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+
+[tool.poetry.scripts]
+conmd = "confluence_markdown.__main__:main"
+
+[tool.poetry.group.dev.dependencies]
+black = "^25.1.0"
+ruff = "^0.13.1"
+mypy = "^1.18.1"
+pytest = "^8.4.2"
+pytest-cov = "^7.0.0"
+pre-commit = "^4.3.0"
+commitizen = "^4.9.1"
+yamllint = "^1.37.1"
+build = "^1.3.0"
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.1.1"
+tag_format = "v$version"
+version_scheme = "semver"
+update_changelog_on_bump = true
+changelog_start_rev = "v0.1.0"
+version_files = [
+  "pyproject.toml:^version = \"\\d+\\.\\d+\\.\\d+\"$"
+]
+
+[build-system]
+requires = ["poetry-core>=1.9.0"]
+build-backend = "poetry.core.masonry.api"
