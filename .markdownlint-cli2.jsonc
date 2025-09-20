@@ -1,0 +1,24 @@
+{
+  // markdownlint-cli2 configuration for CodeRabbit integration
+  "config": {
+    // Use the project's markdownlint configuration
+    "extends": ".markdownlint.yaml"
+  },
+  "globs": [
+    // Include all markdown files
+    "**/*.md",
+    "**/*.markdown"
+  ],
+  "ignores": [
+    // Ignore dependencies and build outputs
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/.venv/**",
+    "**/venv/**"
+  ],
+  // Fix common issues automatically where possible
+  "fix": false,
+  // Show rule names in output for easier understanding
+  "showFound": true
+}
