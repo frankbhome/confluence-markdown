@@ -36,6 +36,5 @@ jobs:
           poetry run pytest --cov=confluence_markdown \
             --cov-report=term-missing
 
-        # Optional: smoke test if you add a CLI script later
-        # - name: Smoke
-        #   run: poetry run conmd
+      - name: CLI Smoke Test
+        run: poetry run conmd
