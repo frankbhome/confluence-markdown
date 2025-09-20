@@ -16,7 +16,13 @@ class TestMarkdownConversion:
     """Test markdown to Confluence conversion functionality."""
 
     def setup_method(self) -> None:
-        """Set up test environment."""
+        """
+        Prepare a test ConfluencePublisher with required environment variables.
+        
+        Patches os.environ to provide fake Confluence and GitHub settings (URL, user, token,
+        space, parent page, repository) and instantiates self.publisher as a ConfluencePublisher
+        ready for use in the tests.
+        """
         with patch.dict(os.environ, {
             'CONFLUENCE_URL': 'https://test.atlassian.net/wiki',
             'CONFLUENCE_USER': 'test@example.com',
@@ -41,7 +47,13 @@ class TestMarkdownConversion:
         assert "<h3>Sub Sub Header</h3>" in result
 
     def test_convert_fenced_code_blocks(self) -> None:
-        """Test fenced code block conversion."""
+        """
+        Verify that fenced code blocks are converted into Confluence code macros.
+        
+        Checks that:
+        - A Python fenced block becomes an <ac:structured-macro ac:name="code"> with language "python" and the code wrapped in a CDATA section.
+        - A Bash fenced block is converted similarly with language "bash" and its code in CDATA.
+        """
         markdown = """Here's some code:
 
 ```python
