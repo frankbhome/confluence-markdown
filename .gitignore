@@ -29,7 +29,6 @@ MANIFEST
 
 # Poetry
 .venv/
-poetry.lock
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -104,7 +103,6 @@ celerybeat.pid
 
 # Environments
 .env
-.venv
 env/
 venv/
 ENV/
