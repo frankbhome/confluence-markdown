@@ -7,6 +7,22 @@ name: CI
     branches: ["main"]
 
 jobs:
+  markdown-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install markdownlint-cli2
+        run: npm install -g markdownlint-cli2
+
+      - name: Run markdownlint
+        run: markdownlint-cli2 --config .markdownlint-cli2.jsonc "**/*.md"
+
   build-test:
     runs-on: ubuntu-latest
     strategy:
