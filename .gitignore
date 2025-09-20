@@ -73,7 +73,6 @@ instance/
 
 # Sphinx / MkDocs documentation
 docs/_build/
-site/
 
 # PyBuilder
 target/
