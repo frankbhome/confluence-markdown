@@ -200,8 +200,8 @@ class TestConfluencePublisher:
             assert "Initial release with basic features." in result
             assert "pip install confluence-markdown==1.0.0" in result
 
-    @patch("scripts.publish_release.requests.get")
-    def test_find_parent_page_id(self, mock_get: Mock) -> None:
+    @patch("scripts.publish_release.requests.Session")
+    def test_find_parent_page_id(self, mock_session_class: Mock) -> None:
         """Test finding parent page ID."""
         config_values = {
             "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
@@ -214,36 +214,40 @@ class TestConfluencePublisher:
         with patch("scripts.publish_release.config", side_effect=lambda key, default="": config_values.get(key, default)):
             publisher = ConfluencePublisher()
 
+            # Mock session and its methods
+            mock_session = Mock()
+            mock_session_class.return_value = mock_session
+            
             # Mock successful response
             mock_response = Mock()
             mock_response.status_code = 200
             mock_response.json.return_value = {"results": [{"id": "parent123"}]}
-            mock_get.return_value = mock_response
+            mock_session.get.return_value = mock_response
 
             result = publisher.find_parent_page_id()
 
             assert result == "parent123"
-            assert mock_get.called
+            assert mock_session.get.called
 
     def test_configuration_validation(self) -> None:
         """Test configuration validation."""
         # Test missing required configuration
-        with patch.dict(os.environ, {}, clear=True):
+        empty_config_values = {}
+        
+        with patch("scripts.publish_release.config", side_effect=lambda key, default="": empty_config_values.get(key, default)):
             with pytest.raises(
                 ValueError, match="Missing required Confluence configuration"
             ):
                 ConfluencePublisher()
 
         # Test partial configuration
-        with patch.dict(
-            os.environ,
-            {
-                "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
-                "CONFLUENCE_USER": "test@example.com",
-                # Missing TOKEN and SPACE
-            },
-            clear=True,
-        ):
+        partial_config_values = {
+            "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+            "CONFLUENCE_USER": "test@example.com",
+            # Missing TOKEN and SPACE
+        }
+        
+        with patch("scripts.publish_release.config", side_effect=lambda key, default="": partial_config_values.get(key, default)):
             with pytest.raises(
                 ValueError, match="Missing required Confluence configuration"
             ):
@@ -253,9 +257,8 @@ class TestConfluencePublisher:
 class TestEndToEndPublishing:
     """Test end-to-end publishing scenarios."""
 
-    @patch("scripts.publish_release.requests.get")
-    @patch("scripts.publish_release.requests.post")
-    def test_successful_page_creation(self, mock_post: Mock, mock_get: Mock) -> None:
+    @patch("scripts.publish_release.requests.Session")
+    def test_successful_page_creation(self, mock_session_class: Mock) -> None:
         """Test successful new page creation."""
         config_values = {
             "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
@@ -267,27 +270,31 @@ class TestEndToEndPublishing:
         with patch("scripts.publish_release.config", side_effect=lambda key, default="": config_values.get(key, default)):
             publisher = ConfluencePublisher()
 
-            # Mock page doesn't exist
+            # Mock session and its methods
+            mock_session = Mock()
+            mock_session_class.return_value = mock_session
+            
+            # Mock responses
             mock_get_response = Mock()
             mock_get_response.status_code = 200
-            mock_get_response.json.return_value = {"results": []}
-            mock_get.return_value = mock_get_response
-
-            # Mock successful page creation
+            mock_get_response.json.return_value = {"results": []}  # Page doesn't exist
+            
             mock_post_response = Mock()
             mock_post_response.status_code = 200
             mock_post_response.json.return_value = {"id": "12345"}
-            mock_post.return_value = mock_post_response
+            
+            # Configure session methods
+            mock_session.get.return_value = mock_get_response
+            mock_session.post.return_value = mock_post_response
 
             result = publisher.publish_release_notes("v1.0.0", "Test release notes")
 
             assert result is True
-            assert mock_post.called
-            assert mock_get.called
+            assert mock_session.get.called
+            assert mock_session.post.called
 
-    @patch("scripts.publish_release.requests.get")
-    @patch("scripts.publish_release.requests.put")
-    def test_successful_page_update(self, mock_put: Mock, mock_get: Mock) -> None:
+    @patch("scripts.publish_release.requests.Session")
+    def test_successful_page_update(self, mock_session_class: Mock) -> None:
         """Test successful page update when page exists."""
         config_values = {
             "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
@@ -299,22 +306,57 @@ class TestEndToEndPublishing:
         with patch("scripts.publish_release.config", side_effect=lambda key, default="": config_values.get(key, default)):
             publisher = ConfluencePublisher()
 
-            # Mock page exists
+            # Mock session and its methods
+            mock_session = Mock()
+            mock_session_class.return_value = mock_session
+            
+            # Mock responses for page exists check
             mock_get_response = Mock()
             mock_get_response.status_code = 200
             mock_get_response.json.return_value = {
                 "results": [{"id": "12345", "version": {"number": 1}}]
             }
-            mock_get.return_value = mock_get_response
-
+            
             # Mock successful page update
             mock_put_response = Mock()
             mock_put_response.status_code = 200
             mock_put_response.json.return_value = {"id": "12345"}
-            mock_put.return_value = mock_put_response
+            
+            # Configure session methods
+            mock_session.get.return_value = mock_get_response
+            mock_session.put.return_value = mock_put_response
 
             result = publisher.publish_release_notes("v1.0.0", "Updated release notes")
 
             assert result is True
-            assert mock_put.called
-            assert mock_get.called
+            assert mock_session.get.called
+            assert mock_session.put.called
+
+    @patch("scripts.publish_release.requests.Session")
+    def test_failed_authentication(self, mock_session_class: Mock) -> None:
+        """Test authentication failure handling."""
+        config_values = {
+            "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+            "CONFLUENCE_USER": "test@example.com",
+            "CONFLUENCE_TOKEN": "invalid_token",
+            "CONFLUENCE_SPACE": "TEST",
+        }
+
+        with patch("scripts.publish_release.config", side_effect=lambda key, default="": config_values.get(key, default)):
+            publisher = ConfluencePublisher()
+
+            # Mock session and its methods
+            mock_session = Mock()
+            mock_session_class.return_value = mock_session
+            
+            # Mock 401 Unauthorized response
+            mock_response = Mock()
+            mock_response.status_code = 401
+            mock_response.text = "Unauthorized"
+            
+            mock_session.get.return_value = mock_response
+
+            result = publisher.publish_release_notes("v1.0.0", "Test release notes")
+
+            assert result is False
+            assert mock_session.get.called
