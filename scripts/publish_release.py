@@ -21,7 +21,7 @@ class ConfluencePublisher:
         Initialize the ConfluencePublisher by loading required configuration from environment.
         
         Reads the following environment variables via decouple.config:
-        - CONFLUENCE_URL, CONFLUENCE_USER, CONFLUENCE_TOKEN, CONFLUENCE_SPACE (required)
+        - CONFLUENCE_URL, CONFLUENCE_USER, CONFLUENCE_API_TOKEN, CONFLUENCE_SPACE (required)
         - CONFLUENCE_PARENT_PAGE, GITHUB_REPOSITORY (optional)
         
         Raises:
@@ -29,7 +29,7 @@ class ConfluencePublisher:
         """
         self.confluence_url = str(config("CONFLUENCE_URL", default=""))  # type: ignore
         self.confluence_user = str(config("CONFLUENCE_USER", default=""))  # type: ignore
-        self.confluence_token = str(config("CONFLUENCE_TOKEN", default=""))  # type: ignore
+        self.confluence_token = str(config("CONFLUENCE_API_TOKEN", default=""))  # type: ignore
         self.confluence_space = str(config("CONFLUENCE_SPACE", default=""))  # type: ignore
         self.confluence_parent_page = str(config("CONFLUENCE_PARENT_PAGE", default=""))  # type: ignore
         self.github_repository = str(config("GITHUB_REPOSITORY", default=""))  # type: ignore
@@ -442,7 +442,7 @@ def main() -> None:
         print("\nRequired environment variables:")
         print("- CONFLUENCE_URL: Your Confluence instance URL")
         print("- CONFLUENCE_USER: Your Confluence username/email")
-        print("- CONFLUENCE_TOKEN: Your Confluence API token")
+        print("- CONFLUENCE_API_TOKEN: Your Confluence API token")
         print("- CONFLUENCE_SPACE: Confluence space key")
         print("- CONFLUENCE_PARENT_PAGE: Parent page title (optional)")
         sys.exit(1)

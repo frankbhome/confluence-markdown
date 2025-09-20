@@ -78,7 +78,7 @@ feature, configure the following GitHub Secrets in your repository:
 - `CONFLUENCE_URL`: Your Confluence instance URL
   (e.g., `https://yourcompany.atlassian.net/wiki`)
 - `CONFLUENCE_USER`: Your Confluence user email
-- `CONFLUENCE_TOKEN`: Your Confluence API token
+- `CONFLUENCE_API_TOKEN`: Your Confluence API token
 - `CONFLUENCE_SPACE`: The Confluence space key where release notes should be
   published
 - `CONFLUENCE_PARENT_PAGE`: (Optional) The parent page title under which
@@ -88,7 +88,7 @@ feature, configure the following GitHub Secrets in your repository:
 
 1. Go to [Atlassian Account Settings](https://id.atlassian.com/manage-profile/security/api-tokens)
 2. Create a new API token
-3. Add the token to your GitHub repository secrets as `CONFLUENCE_TOKEN`
+3. Add the token to your GitHub repository secrets as `CONFLUENCE_API_TOKEN`
 
 ### Manual Release Note Publishing
 
