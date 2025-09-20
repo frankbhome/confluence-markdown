@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-.PHONY: help install test lint type-check clean build preflight-check release-patch release-minor release-major release-alpha release-rc verify-release
+.PHONY: help install test lint type-check clean build all preflight preflight-check release-patch release-minor release-major release-alpha release-rc release-push verify-release
 
 help: ## Show this help message
 	@echo "Available targets:"
@@ -24,6 +24,10 @@ clean: ## Clean build artifacts and cache
 
 build: ## Build the package
 	poetry build
+
+all: test lint type-check ## Run all quality checks (tests, linting, type checking)
+
+preflight: preflight-check ## Alias for preflight-check (shorter command)
 
 preflight-check: ## Check if repository is ready for release
 	@echo "Running preflight checks..."
@@ -57,6 +61,15 @@ release-alpha: preflight-check ## Release an alpha pre-release
 
 release-rc: preflight-check ## Release a release candidate
 	poetry run cz bump --prerelease rc
+
+release-push: ## Push the latest release tag and commits to origin
+	@echo "Pushing release to origin..."
+	@VERSION=$$(poetry version --short); \
+	TAG="v$$VERSION"; \
+	echo "Pushing tag: $$TAG"; \
+	git push origin main; \
+	git push origin "$$TAG"; \
+	echo "✅ Release $$TAG pushed to origin"
 
 verify-release: ## Verify the current project version's tag exists
 	@echo "Verifying current project version has corresponding git tag..."
