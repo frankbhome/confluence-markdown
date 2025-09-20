@@ -9,6 +9,8 @@ import re
 import sys
 import json
 import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 from typing import Dict, Optional, Any
 from decouple import config  # type: ignore
 
@@ -64,6 +66,25 @@ class ConfluencePublisher:
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
+
+    def get_session(self) -> requests.Session:
+        """
+        Create a requests session with retry logic and timeout configuration.
+        
+        Returns:
+            requests.Session: Configured session with retry logic for transient failures.
+        """
+        session = requests.Session()
+        retry = Retry(
+            total=3,
+            backoff_factor=1,
+            status_forcelist=[500, 502, 503, 504],
+            raise_on_status=False
+        )
+        adapter = HTTPAdapter(max_retries=retry)
+        session.mount("https://", adapter)
+        session.mount("http://", adapter)
+        return session
 
     def create_confluence_content(
         self, title: str, version: str, release_notes: str
@@ -247,7 +268,8 @@ pip install confluence-markdown=={version.lstrip('v')}
             "expand": "version",
         }
 
-        response = requests.get(url, headers=self.get_auth_headers(), params=params)
+        session = self.get_session()
+        response = session.get(url, headers=self.get_auth_headers(), params=params, timeout=30)
 
         if response.status_code == 200:
             data = response.json()
@@ -318,7 +340,8 @@ pip install confluence-markdown=={version.lstrip('v')}
             "expand": "version",
         }
 
-        response = requests.get(url, headers=self.get_auth_headers(), params=params)
+        session = self.get_session()
+        response = session.get(url, headers=self.get_auth_headers(), params=params, timeout=30)
 
         if response.status_code == 200:
             data = response.json()
@@ -350,8 +373,9 @@ pip install confluence-markdown=={version.lstrip('v')}
         if parent_id:
             page_data["ancestors"] = [{"id": parent_id}]  # type: ignore
 
-        response = requests.post(
-            url, headers=self.get_auth_headers(), data=json.dumps(page_data)
+        session = self.get_session()
+        response = session.post(
+            url, headers=self.get_auth_headers(), data=json.dumps(page_data), timeout=30
         )
 
         if response.status_code == 200:
@@ -392,8 +416,9 @@ pip install confluence-markdown=={version.lstrip('v')}
             "body": {"storage": {"value": content, "representation": "storage"}},
         }
 
-        response = requests.put(
-            url, headers=self.get_auth_headers(), data=json.dumps(page_data)
+        session = self.get_session()
+        response = session.put(
+            url, headers=self.get_auth_headers(), data=json.dumps(page_data), timeout=30
         )
 
         if response.status_code == 200:
