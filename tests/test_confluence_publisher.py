@@ -19,21 +19,19 @@ class TestMarkdownConversion:
         """
         Prepare a test ConfluencePublisher with required environment variables.
 
-        Patches os.environ to provide fake Confluence and GitHub settings (URL, user, token,
-        space, parent page, repository) and instantiates self.publisher as a ConfluencePublisher
-        ready for use in the tests.
+        Patches decouple.config to provide fake Confluence and GitHub settings and
+        instantiates self.publisher as a ConfluencePublisher ready for use in the tests.
         """
-        with patch.dict(
-            os.environ,
-            {
-                "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
-                "CONFLUENCE_USER": "test@example.com",
-                "CONFLUENCE_TOKEN": "test_token",
-                "CONFLUENCE_SPACE": "TEST",
-                "CONFLUENCE_PARENT_PAGE": "Release Notes",
-                "GITHUB_REPOSITORY": "test/repo",
-            },
-        ):
+        config_values = {
+            "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+            "CONFLUENCE_USER": "test@example.com",
+            "CONFLUENCE_TOKEN": "test_token",
+            "CONFLUENCE_SPACE": "TEST",
+            "CONFLUENCE_PARENT_PAGE": "Release Notes",
+            "GITHUB_REPOSITORY": "test/repo",
+        }
+
+        with patch("scripts.publish_release.config", side_effect=lambda key, default="": config_values.get(key, default)):
             self.publisher = ConfluencePublisher()
 
     def test_convert_headers(self) -> None:
@@ -155,15 +153,14 @@ class TestConfluencePublisher:
 
     def test_page_exists_method(self) -> None:
         """Test page_exists method."""
-        with patch.dict(
-            os.environ,
-            {
-                "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
-                "CONFLUENCE_USER": "test@example.com",
-                "CONFLUENCE_TOKEN": "test_token",
-                "CONFLUENCE_SPACE": "TEST",
-            },
-        ):
+        config_values = {
+            "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+            "CONFLUENCE_USER": "test@example.com",
+            "CONFLUENCE_TOKEN": "test_token",
+            "CONFLUENCE_SPACE": "TEST",
+        }
+
+        with patch("scripts.publish_release.config", side_effect=lambda key, default="": config_values.get(key, default)):
             publisher = ConfluencePublisher()
 
             # Mock the _find_existing_page method
@@ -181,16 +178,15 @@ class TestConfluencePublisher:
 
     def test_create_confluence_content(self) -> None:
         """Test Confluence content creation."""
-        with patch.dict(
-            os.environ,
-            {
-                "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
-                "CONFLUENCE_USER": "test@example.com",
-                "CONFLUENCE_TOKEN": "test_token",
-                "CONFLUENCE_SPACE": "TEST",
-                "GITHUB_REPOSITORY": "test/repo",
-            },
-        ):
+        config_values = {
+            "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+            "CONFLUENCE_USER": "test@example.com",
+            "CONFLUENCE_TOKEN": "test_token",
+            "CONFLUENCE_SPACE": "TEST",
+            "GITHUB_REPOSITORY": "test/repo",
+        }
+
+        with patch("scripts.publish_release.config", side_effect=lambda key, default="": config_values.get(key, default)):
             publisher = ConfluencePublisher()
 
             title = "Release v1.0.0 - confluence-markdown"
@@ -207,16 +203,15 @@ class TestConfluencePublisher:
     @patch("scripts.publish_release.requests.get")
     def test_find_parent_page_id(self, mock_get: Mock) -> None:
         """Test finding parent page ID."""
-        with patch.dict(
-            os.environ,
-            {
-                "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
-                "CONFLUENCE_USER": "test@example.com",
-                "CONFLUENCE_TOKEN": "test_token",
-                "CONFLUENCE_SPACE": "TEST",
-                "CONFLUENCE_PARENT_PAGE": "Release Notes",
-            },
-        ):
+        config_values = {
+            "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+            "CONFLUENCE_USER": "test@example.com",
+            "CONFLUENCE_TOKEN": "test_token",
+            "CONFLUENCE_SPACE": "TEST",
+            "CONFLUENCE_PARENT_PAGE": "Release Notes",
+        }
+
+        with patch("scripts.publish_release.config", side_effect=lambda key, default="": config_values.get(key, default)):
             publisher = ConfluencePublisher()
 
             # Mock successful response
@@ -262,15 +257,14 @@ class TestEndToEndPublishing:
     @patch("scripts.publish_release.requests.post")
     def test_successful_page_creation(self, mock_post: Mock, mock_get: Mock) -> None:
         """Test successful new page creation."""
-        with patch.dict(
-            os.environ,
-            {
-                "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
-                "CONFLUENCE_USER": "test@example.com",
-                "CONFLUENCE_TOKEN": "test_token",
-                "CONFLUENCE_SPACE": "TEST",
-            },
-        ):
+        config_values = {
+            "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+            "CONFLUENCE_USER": "test@example.com",
+            "CONFLUENCE_TOKEN": "test_token",
+            "CONFLUENCE_SPACE": "TEST",
+        }
+
+        with patch("scripts.publish_release.config", side_effect=lambda key, default="": config_values.get(key, default)):
             publisher = ConfluencePublisher()
 
             # Mock page doesn't exist
@@ -295,15 +289,14 @@ class TestEndToEndPublishing:
     @patch("scripts.publish_release.requests.put")
     def test_successful_page_update(self, mock_put: Mock, mock_get: Mock) -> None:
         """Test successful page update when page exists."""
-        with patch.dict(
-            os.environ,
-            {
-                "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
-                "CONFLUENCE_USER": "test@example.com",
-                "CONFLUENCE_TOKEN": "test_token",
-                "CONFLUENCE_SPACE": "TEST",
-            },
-        ):
+        config_values = {
+            "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+            "CONFLUENCE_USER": "test@example.com",
+            "CONFLUENCE_TOKEN": "test_token",
+            "CONFLUENCE_SPACE": "TEST",
+        }
+
+        with patch("scripts.publish_release.config", side_effect=lambda key, default="": config_values.get(key, default)):
             publisher = ConfluencePublisher()
 
             # Mock page exists

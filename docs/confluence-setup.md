@@ -28,7 +28,7 @@ CONFLUENCE_URL=https://your-domain.atlassian.net/wiki
 
 # Confluence API credentials
 CONFLUENCE_USER=your-email@company.com
-CONFLUENCE_API_TOKEN=your_api_token_here
+CONFLUENCE_TOKEN=your_api_token_here
 
 # Confluence space and page configuration
 CONFLUENCE_SPACE=PROJ
@@ -84,7 +84,7 @@ The script is designed to work with GitHub Actions. Add this to your release wor
   env:
     CONFLUENCE_URL: ${{ secrets.CONFLUENCE_URL }}
     CONFLUENCE_USER: ${{ secrets.CONFLUENCE_USER }}
-    CONFLUENCE_API_TOKEN: ${{ secrets.CONFLUENCE_API_TOKEN }}
+    CONFLUENCE_TOKEN: ${{ secrets.CONFLUENCE_TOKEN }}
     CONFLUENCE_SPACE: ${{ secrets.CONFLUENCE_SPACE }}
     CONFLUENCE_PARENT_PAGE: ${{ secrets.CONFLUENCE_PARENT_PAGE }}
   run: poetry run python scripts/publish_release.py

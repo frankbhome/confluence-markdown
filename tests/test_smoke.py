@@ -118,7 +118,7 @@ def test_confluence_publisher_import():
             {
                 "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
                 "CONFLUENCE_USER": "test@example.com",
-                "CONFLUENCE_API_TOKEN": "test_token",
+                "CONFLUENCE_TOKEN": "test_token",
                 "CONFLUENCE_SPACE": "TEST",
             },
         ):
