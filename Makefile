@@ -58,6 +58,19 @@ release-alpha: preflight-check ## Release an alpha pre-release
 release-rc: preflight-check ## Release a release candidate
 	poetry run cz bump --prerelease rc
 
-verify-release: ## Verify the current release tag
-	git fetch --tags
-	git describe --tags --always
+verify-release: ## Verify the current project version's tag exists
+	@echo "Verifying current project version has corresponding git tag..."
+	@VERSION=$$(poetry version --short); \
+	TAG="v$$VERSION"; \
+	echo "Current project version: $$VERSION"; \
+	echo "Expected git tag: $$TAG"; \
+	git fetch --tags >/dev/null 2>&1; \
+	if git rev-parse "$$TAG" >/dev/null 2>&1; then \
+		echo "✅ Tag $$TAG exists"; \
+		git show --format="%h %s" --no-patch "$$TAG"; \
+	else \
+		echo "❌ Error: Tag $$TAG does not exist"; \
+		echo "Available tags:"; \
+		git tag --sort=-version:refname | head -5; \
+		exit 1; \
+	fi
