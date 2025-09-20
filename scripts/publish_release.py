@@ -70,7 +70,7 @@ class ConfluencePublisher:
     def get_session(self) -> requests.Session:
         """
         Create a requests session with retry logic and timeout configuration.
-        
+
         Returns:
             requests.Session: Configured session with retry logic for transient failures.
         """
@@ -378,7 +378,7 @@ pip install confluence-markdown=={version.lstrip('v')}
             url, headers=self.get_auth_headers(), data=json.dumps(page_data), timeout=30
         )
 
-        if response.status_code == 200:
+        if response.status_code // 100 == 2:  # Accept any 2xx success code
             page_info = response.json()
             page_url = (
                 f"{self.confluence_url}/pages/viewpage.action?pageId={page_info['id']}"
@@ -421,7 +421,7 @@ pip install confluence-markdown=={version.lstrip('v')}
             url, headers=self.get_auth_headers(), data=json.dumps(page_data), timeout=30
         )
 
-        if response.status_code == 200:
+        if response.status_code // 100 == 2:  # Accept any 2xx success code
             page_url = f"{self.confluence_url}/pages/viewpage.action?pageId={page_id}"
             print(f"✅ Updated Confluence page: {page_url}")
             return True
