@@ -217,7 +217,7 @@ class TestConfluencePublisher:
             # Mock session and its methods
             mock_session = Mock()
             mock_session_class.return_value = mock_session
-            
+
             # Mock successful response
             mock_response = Mock()
             mock_response.status_code = 200
@@ -233,7 +233,7 @@ class TestConfluencePublisher:
         """Test configuration validation."""
         # Test missing required configuration
         empty_config_values = {}
-        
+
         with patch("scripts.publish_release.config", side_effect=lambda key, default="": empty_config_values.get(key, default)):
             with pytest.raises(
                 ValueError, match="Missing required Confluence configuration"
@@ -246,7 +246,7 @@ class TestConfluencePublisher:
             "CONFLUENCE_USER": "test@example.com",
             # Missing TOKEN and SPACE
         }
-        
+
         with patch("scripts.publish_release.config", side_effect=lambda key, default="": partial_config_values.get(key, default)):
             with pytest.raises(
                 ValueError, match="Missing required Confluence configuration"
@@ -273,16 +273,16 @@ class TestEndToEndPublishing:
             # Mock session and its methods
             mock_session = Mock()
             mock_session_class.return_value = mock_session
-            
+
             # Mock responses
             mock_get_response = Mock()
             mock_get_response.status_code = 200
             mock_get_response.json.return_value = {"results": []}  # Page doesn't exist
-            
+
             mock_post_response = Mock()
             mock_post_response.status_code = 200
             mock_post_response.json.return_value = {"id": "12345"}
-            
+
             # Configure session methods
             mock_session.get.return_value = mock_get_response
             mock_session.post.return_value = mock_post_response
@@ -309,19 +309,19 @@ class TestEndToEndPublishing:
             # Mock session and its methods
             mock_session = Mock()
             mock_session_class.return_value = mock_session
-            
+
             # Mock responses for page exists check
             mock_get_response = Mock()
             mock_get_response.status_code = 200
             mock_get_response.json.return_value = {
                 "results": [{"id": "12345", "version": {"number": 1}}]
             }
-            
+
             # Mock successful page update
             mock_put_response = Mock()
             mock_put_response.status_code = 200
             mock_put_response.json.return_value = {"id": "12345"}
-            
+
             # Configure session methods
             mock_session.get.return_value = mock_get_response
             mock_session.put.return_value = mock_put_response
@@ -348,12 +348,12 @@ class TestEndToEndPublishing:
             # Mock session and its methods
             mock_session = Mock()
             mock_session_class.return_value = mock_session
-            
+
             # Mock 401 Unauthorized response
             mock_response = Mock()
             mock_response.status_code = 401
             mock_response.text = "Unauthorized"
-            
+
             mock_session.get.return_value = mock_response
 
             result = publisher.publish_release_notes("v1.0.0", "Test release notes")
