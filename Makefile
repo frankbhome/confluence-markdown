@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-.PHONY: help install test lint type-check clean build release-patch release-minor release-major release-alpha release-rc verify-release
+.PHONY: help install test lint type-check clean build preflight-check release-patch release-minor release-major release-alpha release-rc verify-release
 
 help: ## Show this help message
 	@echo "Available targets:"
@@ -25,20 +25,38 @@ clean: ## Clean build artifacts and cache
 build: ## Build the package
 	poetry build
 
-release-patch: ## Release a patch version (x.x.X)
-	cz bump --increment patch
+preflight-check: ## Check if repository is ready for release
+	@echo "Running preflight checks..."
+	@if [ "$$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then \
+		echo "❌ Error: Not on main branch. Current branch: $$(git rev-parse --abbrev-ref HEAD)"; \
+		echo "Please switch to main branch before releasing."; \
+		exit 1; \
+	fi
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "❌ Error: Working directory is dirty. Please commit or stash changes."; \
+		git status --short; \
+		exit 1; \
+	fi
+	@if [ -n "$$(git log origin/main..HEAD 2>/dev/null)" ]; then \
+		echo "❌ Error: Local main branch is ahead of origin/main. Please push changes first."; \
+		exit 1; \
+	fi
+	@echo "✅ Repository is ready for release"
 
-release-minor: ## Release a minor version (x.X.x)
-	cz bump --increment minor
+release-patch: preflight-check ## Release a patch version (x.x.X)
+	poetry run cz bump --increment patch
 
-release-major: ## Release a major version (X.x.x)
-	cz bump --increment major
+release-minor: preflight-check ## Release a minor version (x.X.x)
+	poetry run cz bump --increment minor
 
-release-alpha: ## Release an alpha pre-release
-	cz bump --prerelease alpha
+release-major: preflight-check ## Release a major version (X.x.x)
+	poetry run cz bump --increment major
 
-release-rc: ## Release a release candidate
-	cz bump --prerelease rc
+release-alpha: preflight-check ## Release an alpha pre-release
+	poetry run cz bump --prerelease alpha
+
+release-rc: preflight-check ## Release a release candidate
+	poetry run cz bump --prerelease rc
 
 verify-release: ## Verify the current release tag
 	git fetch --tags
