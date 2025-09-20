@@ -1,0 +1,9 @@
+# Markdownlint configuration
+default: true
+
+# Disable MD041 (first-line-heading) rule for LICENSE files
+# since they are legal documents with specific formatting
+MD041: false
+
+# Allow duplicate headings in changelogs (common for Added/Changed/Fixed sections)
+MD024: false
