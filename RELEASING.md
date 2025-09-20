@@ -62,7 +62,7 @@ poetry run cz version
    ```bash
    # Verify package is available on PyPI
    pip index versions confluence-markdown
-   
+
    # Test fresh installation
    pip install --upgrade confluence-markdown
    python -m confluence_markdown  # Should print "confluence-markdown OK"

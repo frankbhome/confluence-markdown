@@ -79,7 +79,7 @@ class ConfluencePublisher:
             total=3,
             backoff_factor=1,
             status_forcelist=[500, 502, 503, 504],
-            raise_on_status=False
+            raise_on_status=False,
         )
         adapter = HTTPAdapter(max_retries=retry)
         session.mount("https://", adapter)
@@ -219,7 +219,11 @@ pip install confluence-markdown=={version.lstrip('v')}
             line = line.strip()
 
             # Only wrap in paragraphs if not already HTML and not a placeholder
-            if line and not line.startswith("<") and not line.startswith("__CODE_BLOCK_"):
+            if (
+                line
+                and not line.startswith("<")
+                and not line.startswith("__CODE_BLOCK_")
+            ):
                 line = f"<p>{line}</p>"
             result.append(line)
 
@@ -234,10 +238,12 @@ pip install confluence-markdown=={version.lstrip('v')}
                 confluence_code = (
                     f'<ac:structured-macro ac:name="code" ac:schema-version="1">'
                     f'<ac:parameter ac:name="language">{language}</ac:parameter>'
-                    f'<ac:plain-text-body><![CDATA[{content}]]></ac:plain-text-body>'
-                    f'</ac:structured-macro>'
+                    f"<ac:plain-text-body><![CDATA[{content}]]></ac:plain-text-body>"
+                    f"</ac:structured-macro>"
                 )
-                final_result = final_result.replace(f"__CODE_BLOCK_{i}__", confluence_code)
+                final_result = final_result.replace(
+                    f"__CODE_BLOCK_{i}__", confluence_code
+                )
 
         return final_result
 
@@ -269,7 +275,9 @@ pip install confluence-markdown=={version.lstrip('v')}
         }
 
         session = self.get_session()
-        response = session.get(url, headers=self.get_auth_headers(), params=params, timeout=30)
+        response = session.get(
+            url, headers=self.get_auth_headers(), params=params, timeout=30
+        )
 
         if response.status_code == 200:
             data = response.json()
@@ -341,7 +349,9 @@ pip install confluence-markdown=={version.lstrip('v')}
         }
 
         session = self.get_session()
-        response = session.get(url, headers=self.get_auth_headers(), params=params, timeout=30)
+        response = session.get(
+            url, headers=self.get_auth_headers(), params=params, timeout=30
+        )
 
         if response.status_code == 200:
             data = response.json()

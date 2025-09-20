@@ -23,14 +23,16 @@ def test_smoke():
 def test_package_main_entry_point():
     """Test that the package main module can be executed."""
     # Test by running the module directly via subprocess
-    src_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src")
+    src_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"
+    )
 
     result = subprocess.run(
         [sys.executable, "-m", "confluence_markdown"],
         capture_output=True,
         text=True,
         env={**os.environ, "PYTHONPATH": src_path},
-        cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     )
 
     # Should exit successfully and print the expected message
@@ -47,7 +49,7 @@ def test_cli_help_message():
         [sys.executable, script_path],
         capture_output=True,
         text=True,
-        cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     )
 
     assert result.returncode == 1
@@ -64,7 +66,7 @@ def test_cli_configuration_validation():
     env = os.environ.copy()
     # Clear confluence environment variables to force configuration error
     for key in list(env.keys()):
-        if key.startswith('CONFLUENCE_'):
+        if key.startswith("CONFLUENCE_"):
             del env[key]
 
     result = subprocess.run(
@@ -72,7 +74,7 @@ def test_cli_configuration_validation():
         capture_output=True,
         text=True,
         env=env,
-        cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     )
 
     assert result.returncode == 1
@@ -86,14 +88,19 @@ def test_confluence_publisher_import():
     # Add the scripts directory to path for import
     import sys
     import os
-    scripts_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts")
+
+    scripts_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts"
+    )
     sys.path.insert(0, scripts_path)
 
     try:
         # Import using importlib to avoid static analysis issues
         import importlib.util
-        spec = importlib.util.spec_from_file_location("publish_release",
-                                                     os.path.join(scripts_path, "publish_release.py"))
+
+        spec = importlib.util.spec_from_file_location(
+            "publish_release", os.path.join(scripts_path, "publish_release.py")
+        )
         if spec is None or spec.loader is None:
             assert False, "Could not load publish_release module"
 
@@ -106,12 +113,15 @@ def test_confluence_publisher_import():
         assert ConfluencePublisher is not None
 
         # Test markdown conversion functionality without requiring Confluence config
-        with patch.dict(os.environ, {
-            'CONFLUENCE_URL': 'https://test.atlassian.net/wiki',
-            'CONFLUENCE_USER': 'test@example.com',
-            'CONFLUENCE_API_TOKEN': 'test_token',
-            'CONFLUENCE_SPACE': 'TEST'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+                "CONFLUENCE_USER": "test@example.com",
+                "CONFLUENCE_API_TOKEN": "test_token",
+                "CONFLUENCE_SPACE": "TEST",
+            },
+        ):
             publisher = ConfluencePublisher()
 
             # Test basic markdown conversion

@@ -18,19 +18,22 @@ class TestMarkdownConversion:
     def setup_method(self) -> None:
         """
         Prepare a test ConfluencePublisher with required environment variables.
-        
+
         Patches os.environ to provide fake Confluence and GitHub settings (URL, user, token,
         space, parent page, repository) and instantiates self.publisher as a ConfluencePublisher
         ready for use in the tests.
         """
-        with patch.dict(os.environ, {
-            'CONFLUENCE_URL': 'https://test.atlassian.net/wiki',
-            'CONFLUENCE_USER': 'test@example.com',
-            'CONFLUENCE_TOKEN': 'test_token',
-            'CONFLUENCE_SPACE': 'TEST',
-            'CONFLUENCE_PARENT_PAGE': 'Release Notes',
-            'GITHUB_REPOSITORY': 'test/repo'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+                "CONFLUENCE_USER": "test@example.com",
+                "CONFLUENCE_TOKEN": "test_token",
+                "CONFLUENCE_SPACE": "TEST",
+                "CONFLUENCE_PARENT_PAGE": "Release Notes",
+                "GITHUB_REPOSITORY": "test/repo",
+            },
+        ):
             self.publisher = ConfluencePublisher()
 
     def test_convert_headers(self) -> None:
@@ -49,7 +52,7 @@ class TestMarkdownConversion:
     def test_convert_fenced_code_blocks(self) -> None:
         """
         Verify that fenced code blocks are converted into Confluence code macros.
-        
+
         Checks that:
         - A Python fenced block becomes an <ac:structured-macro ac:name="code"> with language "python" and the code wrapped in a CDATA section.
         - A Bash fenced block is converted similarly with language "bash" and its code in CDATA.
@@ -152,36 +155,42 @@ class TestConfluencePublisher:
 
     def test_page_exists_method(self) -> None:
         """Test page_exists method."""
-        with patch.dict(os.environ, {
-            'CONFLUENCE_URL': 'https://test.atlassian.net/wiki',
-            'CONFLUENCE_USER': 'test@example.com',
-            'CONFLUENCE_TOKEN': 'test_token',
-            'CONFLUENCE_SPACE': 'TEST'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+                "CONFLUENCE_USER": "test@example.com",
+                "CONFLUENCE_TOKEN": "test_token",
+                "CONFLUENCE_SPACE": "TEST",
+            },
+        ):
             publisher = ConfluencePublisher()
 
             # Mock the _find_existing_page method
-            with patch.object(publisher, '_find_existing_page') as mock_find:
+            with patch.object(publisher, "_find_existing_page") as mock_find:
                 # Test when page exists
-                mock_find.return_value = {'id': '12345'}
-                assert publisher.page_exists('v1.0.0') is True
+                mock_find.return_value = {"id": "12345"}
+                assert publisher.page_exists("v1.0.0") is True
 
                 # Test when page doesn't exist
                 mock_find.return_value = None
-                assert publisher.page_exists('v1.0.0') is False
+                assert publisher.page_exists("v1.0.0") is False
 
                 # Verify correct title format
                 mock_find.assert_called_with("Release v1.0.0 - confluence-markdown")
 
     def test_create_confluence_content(self) -> None:
         """Test Confluence content creation."""
-        with patch.dict(os.environ, {
-            'CONFLUENCE_URL': 'https://test.atlassian.net/wiki',
-            'CONFLUENCE_USER': 'test@example.com',
-            'CONFLUENCE_TOKEN': 'test_token',
-            'CONFLUENCE_SPACE': 'TEST',
-            'GITHUB_REPOSITORY': 'test/repo'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+                "CONFLUENCE_USER": "test@example.com",
+                "CONFLUENCE_TOKEN": "test_token",
+                "CONFLUENCE_SPACE": "TEST",
+                "GITHUB_REPOSITORY": "test/repo",
+            },
+        ):
             publisher = ConfluencePublisher()
 
             title = "Release v1.0.0 - confluence-markdown"
@@ -195,73 +204,85 @@ class TestConfluencePublisher:
             assert "Initial release with basic features." in result
             assert "pip install confluence-markdown==1.0.0" in result
 
-    @patch('scripts.publish_release.requests.get')
+    @patch("scripts.publish_release.requests.get")
     def test_find_parent_page_id(self, mock_get: Mock) -> None:
         """Test finding parent page ID."""
-        with patch.dict(os.environ, {
-            'CONFLUENCE_URL': 'https://test.atlassian.net/wiki',
-            'CONFLUENCE_USER': 'test@example.com',
-            'CONFLUENCE_TOKEN': 'test_token',
-            'CONFLUENCE_SPACE': 'TEST',
-            'CONFLUENCE_PARENT_PAGE': 'Release Notes'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+                "CONFLUENCE_USER": "test@example.com",
+                "CONFLUENCE_TOKEN": "test_token",
+                "CONFLUENCE_SPACE": "TEST",
+                "CONFLUENCE_PARENT_PAGE": "Release Notes",
+            },
+        ):
             publisher = ConfluencePublisher()
 
             # Mock successful response
             mock_response = Mock()
             mock_response.status_code = 200
-            mock_response.json.return_value = {
-                'results': [{'id': 'parent123'}]
-            }
+            mock_response.json.return_value = {"results": [{"id": "parent123"}]}
             mock_get.return_value = mock_response
 
             result = publisher.find_parent_page_id()
 
-            assert result == 'parent123'
+            assert result == "parent123"
             assert mock_get.called
 
     def test_configuration_validation(self) -> None:
         """Test configuration validation."""
         # Test missing required configuration
         with patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(ValueError, match="Missing required Confluence configuration"):
+            with pytest.raises(
+                ValueError, match="Missing required Confluence configuration"
+            ):
                 ConfluencePublisher()
 
         # Test partial configuration
-        with patch.dict(os.environ, {
-            'CONFLUENCE_URL': 'https://test.atlassian.net/wiki',
-            'CONFLUENCE_USER': 'test@example.com'
-            # Missing TOKEN and SPACE
-        }, clear=True):
-            with pytest.raises(ValueError, match="Missing required Confluence configuration"):
+        with patch.dict(
+            os.environ,
+            {
+                "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+                "CONFLUENCE_USER": "test@example.com",
+                # Missing TOKEN and SPACE
+            },
+            clear=True,
+        ):
+            with pytest.raises(
+                ValueError, match="Missing required Confluence configuration"
+            ):
                 ConfluencePublisher()
 
 
 class TestEndToEndPublishing:
     """Test end-to-end publishing scenarios."""
 
-    @patch('scripts.publish_release.requests.get')
-    @patch('scripts.publish_release.requests.post')
+    @patch("scripts.publish_release.requests.get")
+    @patch("scripts.publish_release.requests.post")
     def test_successful_page_creation(self, mock_post: Mock, mock_get: Mock) -> None:
         """Test successful new page creation."""
-        with patch.dict(os.environ, {
-            'CONFLUENCE_URL': 'https://test.atlassian.net/wiki',
-            'CONFLUENCE_USER': 'test@example.com',
-            'CONFLUENCE_TOKEN': 'test_token',
-            'CONFLUENCE_SPACE': 'TEST'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+                "CONFLUENCE_USER": "test@example.com",
+                "CONFLUENCE_TOKEN": "test_token",
+                "CONFLUENCE_SPACE": "TEST",
+            },
+        ):
             publisher = ConfluencePublisher()
 
             # Mock page doesn't exist
             mock_get_response = Mock()
             mock_get_response.status_code = 200
-            mock_get_response.json.return_value = {'results': []}
+            mock_get_response.json.return_value = {"results": []}
             mock_get.return_value = mock_get_response
 
             # Mock successful page creation
             mock_post_response = Mock()
             mock_post_response.status_code = 200
-            mock_post_response.json.return_value = {'id': '12345'}
+            mock_post_response.json.return_value = {"id": "12345"}
             mock_post.return_value = mock_post_response
 
             result = publisher.publish_release_notes("v1.0.0", "Test release notes")
@@ -270,30 +291,33 @@ class TestEndToEndPublishing:
             assert mock_post.called
             assert mock_get.called
 
-    @patch('scripts.publish_release.requests.get')
-    @patch('scripts.publish_release.requests.put')
+    @patch("scripts.publish_release.requests.get")
+    @patch("scripts.publish_release.requests.put")
     def test_successful_page_update(self, mock_put: Mock, mock_get: Mock) -> None:
         """Test successful page update when page exists."""
-        with patch.dict(os.environ, {
-            'CONFLUENCE_URL': 'https://test.atlassian.net/wiki',
-            'CONFLUENCE_USER': 'test@example.com',
-            'CONFLUENCE_TOKEN': 'test_token',
-            'CONFLUENCE_SPACE': 'TEST'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+                "CONFLUENCE_USER": "test@example.com",
+                "CONFLUENCE_TOKEN": "test_token",
+                "CONFLUENCE_SPACE": "TEST",
+            },
+        ):
             publisher = ConfluencePublisher()
 
             # Mock page exists
             mock_get_response = Mock()
             mock_get_response.status_code = 200
             mock_get_response.json.return_value = {
-                'results': [{'id': '12345', 'version': {'number': 1}}]
+                "results": [{"id": "12345", "version": {"number": 1}}]
             }
             mock_get.return_value = mock_get_response
 
             # Mock successful page update
             mock_put_response = Mock()
             mock_put_response.status_code = 200
-            mock_put_response.json.return_value = {'id': '12345'}
+            mock_put_response.json.return_value = {"id": "12345"}
             mock_put.return_value = mock_put_response
 
             result = publisher.publish_release_notes("v1.0.0", "Updated release notes")
