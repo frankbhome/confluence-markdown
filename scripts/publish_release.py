@@ -16,7 +16,7 @@ from decouple import config  # type: ignore
 class ConfluencePublisher:
     """Publishes release notes to Confluence."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the Confluence publisher with configuration."""
         self.confluence_url = str(config("CONFLUENCE_URL", default=""))  # type: ignore
         self.confluence_user = str(config("CONFLUENCE_USER", default=""))  # type: ignore
@@ -92,6 +92,24 @@ pip install confluence-markdown=={version.lstrip('v')}
 
     def _convert_markdown_to_confluence(self, markdown: str) -> str:
         """Convert basic markdown to Confluence storage format."""
+        # Store code blocks temporarily to protect them during processing
+        code_blocks: list[str] = []
+
+        def store_code_block(match: re.Match[str]) -> str:
+            code_blocks.append(match.group(0))
+            return f"__CODE_BLOCK_{len(code_blocks) - 1}__"
+
+        # Extract and store fenced code blocks
+        markdown = re.sub(
+            r"```(\w+)?\n(.*?)\n```",
+            store_code_block,
+            markdown,
+            flags=re.DOTALL,
+        )
+
+        # Convert inline code blocks
+        markdown = re.sub(r"`([^`]+)`", r"<code>\1</code>", markdown)
+
         # Convert headers
         markdown = re.sub(r"^### (.*)", r"<h3>\1</h3>", markdown, flags=re.MULTILINE)
         markdown = re.sub(r"^## (.*)", r"<h2>\1</h2>", markdown, flags=re.MULTILINE)
@@ -106,19 +124,41 @@ pip install confluence-markdown=={version.lstrip('v')}
         # Convert bold
         markdown = re.sub(r"\*\*(.*?)\*\*", r"<strong>\1</strong>", markdown)
 
+        # Convert italic
+        markdown = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", markdown)
+
         # Convert links
         markdown = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2">\1</a>', markdown)
 
-        # Convert paragraphs
+        # Convert paragraphs (but skip lines that are already HTML or empty)
         lines = markdown.split("\n")
         result: list[str] = []
+
         for line in lines:
             line = line.strip()
-            if line and not line.startswith("<"):
+
+            # Only wrap in paragraphs if not already HTML and not a placeholder
+            if line and not line.startswith("<") and not line.startswith("__CODE_BLOCK_"):
                 line = f"<p>{line}</p>"
             result.append(line)
 
-        return "\n".join(result)
+        # Restore code blocks with proper Confluence format
+        final_result = "\n".join(result)
+        for i, code_block in enumerate(code_blocks):
+            # Parse the original code block to extract language and content
+            match = re.match(r"```(\w+)?\n(.*?)\n```", code_block, re.DOTALL)
+            if match:
+                language = match.group(1) or "text"
+                content = match.group(2)
+                confluence_code = (
+                    f'<ac:structured-macro ac:name="code" ac:schema-version="1">'
+                    f'<ac:parameter ac:name="language">{language}</ac:parameter>'
+                    f'<ac:plain-text-body><![CDATA[{content}]]></ac:plain-text-body>'
+                    f'</ac:structured-macro>'
+                )
+                final_result = final_result.replace(f"__CODE_BLOCK_{i}__", confluence_code)
+
+        return final_result
 
     def _get_current_date(self) -> str:
         """Get current date in readable format."""
@@ -143,7 +183,7 @@ pip install confluence-markdown=={version.lstrip('v')}
         if response.status_code == 200:
             data = response.json()
             if data["results"]:
-                return data["results"][0]["id"]
+                return str(data["results"][0]["id"])
 
         return None
 
@@ -207,7 +247,7 @@ pip install confluence-markdown=={version.lstrip('v')}
         if response.status_code == 200:
             data = response.json()
             if data["results"]:
-                return data["results"][0]
+                return dict(data["results"][0])
 
         return None
 
@@ -268,7 +308,7 @@ pip install confluence-markdown=={version.lstrip('v')}
             return False
 
 
-def main():
+def main() -> None:
     """Main entry point for the script."""
     if len(sys.argv) != 3:
         print("Usage: publish_release.py <version> <release_notes>")

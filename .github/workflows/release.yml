@@ -37,3 +37,19 @@ jobs:
           files: |
             dist/*.whl
             dist/*.tar.gz
+
+      - name: Publish Release Notes to Confluence
+        env:
+          CONFLUENCE_URL: ${{ secrets.CONFLUENCE_URL }}
+          CONFLUENCE_USER: ${{ secrets.CONFLUENCE_USER }}
+          CONFLUENCE_TOKEN: ${{ secrets.CONFLUENCE_TOKEN }}
+          CONFLUENCE_SPACE: ${{ secrets.CONFLUENCE_SPACE }}
+          CONFLUENCE_PARENT_PAGE: ${{ secrets.CONFLUENCE_PARENT_PAGE }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Get the release notes from the GitHub API
+          RELEASE_NOTES=$(gh api repos/${{ github.repository }}/releases/tags/${{ github.ref_name }} --jq '.body')
+
+          # Publish to Confluence
+          poetry run python scripts/publish_release.py "${{ github.ref_name }}" "$RELEASE_NOTES"
