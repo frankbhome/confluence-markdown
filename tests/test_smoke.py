@@ -109,7 +109,7 @@ def test_confluence_publisher_import():
         with patch.dict(os.environ, {
             'CONFLUENCE_URL': 'https://test.atlassian.net/wiki',
             'CONFLUENCE_USER': 'test@example.com',
-            'CONFLUENCE_TOKEN': 'test_token',
+            'CONFLUENCE_API_TOKEN': 'test_token',
             'CONFLUENCE_SPACE': 'TEST'
         }):
             publisher = ConfluencePublisher()
