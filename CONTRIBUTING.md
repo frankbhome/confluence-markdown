@@ -200,7 +200,6 @@ Example (pre-commit):
 
 - Open a **GitHub Issue** for bugs and feature requests.
 - Use the provided issue templates for better triage.
-- Check Confluence for requirements and design documentation.
 - For general questions, start a **GitHub Discussion** (if enabled) or open a
   **draft PR**.
 
