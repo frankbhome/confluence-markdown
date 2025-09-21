@@ -60,8 +60,9 @@ jobs:
 
       - name: Tests
         run: |
-          poetry run pytest --cov=confluence_markdown \
-            --cov-report=term-missing
+          poetry run pytest --cov=scripts \
+            --cov-report=term-missing \
+            --cov-fail-under=80
 
       - name: CLI Smoke Test
         run: poetry run conmd
