@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Tests for Confluence Publisher functionality."""
 
-import pytest
-from unittest.mock import Mock, patch
-import sys
 import os
+import sys
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Add the project root to the Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -250,9 +251,7 @@ class TestConfluencePublisher:
             "scripts.publish_release.config",
             side_effect=lambda key, default="": empty_config_values.get(key, default),
         ):
-            with pytest.raises(
-                ValueError, match="Missing required Confluence configuration"
-            ):
+            with pytest.raises(ValueError, match="Missing required Confluence configuration"):
                 ConfluencePublisher()
 
         # Test partial configuration
@@ -266,9 +265,7 @@ class TestConfluencePublisher:
             "scripts.publish_release.config",
             side_effect=lambda key, default="": partial_config_values.get(key, default),
         ):
-            with pytest.raises(
-                ValueError, match="Missing required Confluence configuration"
-            ):
+            with pytest.raises(ValueError, match="Missing required Confluence configuration"):
                 ConfluencePublisher()
 
 
