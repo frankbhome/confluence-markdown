@@ -1,10 +1,12 @@
 # confluence-markdown
 
-A Python-based tool to synchronise documents between **Markdown** (in Git) and **Confluence** pages, supporting two-way conversion and CI/CD automation.
+A Python-based tool to synchronise documents between **Markdown** (in Git) and
+**Confluence** pages, supporting two-way conversion and CI/CD automation.
 
 ---
 
 ## 🚀 Features
+
 - Note: These features are planned but not yet implemented.
 - Convert Markdown → Confluence (publish to pages via REST API).
 - Convert Confluence → Markdown (store as version-controlled files in Git).
@@ -17,16 +19,19 @@ A Python-based tool to synchronise documents between **Markdown** (in Git) and *
 ## 📦 Getting Started
 
 ### 1. Install dependencies
+
 ```bash
 poetry install
 ```
 
 ### 2. Run CLI
+
 ```bash
 poetry run conmd
 ```
 
 ### 3. Run tests
+
 ```bash
 poetry run pytest
 ```
