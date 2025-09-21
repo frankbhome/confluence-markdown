@@ -5,14 +5,15 @@ This script automatically publishes release notes to Confluence
 when a new GitHub release is created.
 """
 
+import json
 import re
 import sys
-import json
+from typing import Any, Optional
+
 import requests
+from decouple import config  # type: ignore
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
-from typing import Dict, Optional, Any
-from decouple import config  # type: ignore
 
 
 class ConfluencePublisher:
@@ -27,7 +28,8 @@ class ConfluencePublisher:
         - CONFLUENCE_PARENT_PAGE, GITHUB_REPOSITORY (optional)
 
         Raises:
-            ValueError: If any of the required Confluence settings (URL, user, token, space) are missing.
+            ValueError: If any of the required Confluence settings (URL, user, token, space)
+                are missing.
         """
         self.confluence_url = str(config("CONFLUENCE_URL", default=""))  # type: ignore
         self.confluence_user = str(config("CONFLUENCE_USER", default=""))  # type: ignore
@@ -45,10 +47,11 @@ class ConfluencePublisher:
             ]
         ):
             raise ValueError(
-                "Missing required Confluence configuration (URL, user, token, and space are required)"
+                "Missing required Confluence configuration "
+                "(URL, user, token, and space are required)"
             )
 
-    def get_auth_headers(self) -> Dict[str, str]:
+    def get_auth_headers(self) -> dict[str, str]:
         """
         Return HTTP headers configured for Confluence REST API requests.
 
@@ -86,9 +89,7 @@ class ConfluencePublisher:
         session.mount("http://", adapter)
         return session
 
-    def create_confluence_content(
-        self, title: str, version: str, release_notes: str
-    ) -> str:
+    def create_confluence_content(self, title: str, version: str, release_notes: str) -> str:
         """
         Builds Confluence storage-format HTML for a release page including header, release notes, installation snippet, and metadata.
 
@@ -116,7 +117,7 @@ class ConfluencePublisher:
         confluence_content = f"""
 <h1>Release {version}</h1>
 <p><strong>Release Date:</strong> {self._get_current_date()}</p>
-{f'<p><strong>GitHub Tag:</strong> <a href="{github_url}">{version}</a></p>' if github_url else ''}
+{f'<p><strong>GitHub Tag:</strong> <a href="{github_url}">{version}</a></p>' if github_url else ""}
 
 <h2>Release Notes</h2>
 {self._convert_markdown_to_confluence(release_notes)}
@@ -125,7 +126,7 @@ class ConfluencePublisher:
 <ac:structured-macro ac:name="code" ac:schema-version="1">
 <ac:parameter ac:name="language">bash</ac:parameter>
 <ac:plain-text-body><![CDATA[
-pip install confluence-markdown=={version.lstrip('v')}
+pip install confluence-markdown=={version.lstrip("v")}
 ]]></ac:plain-text-body>
 </ac:structured-macro>
 
@@ -198,9 +199,7 @@ pip install confluence-markdown=={version.lstrip('v')}
 
         # Convert lists
         markdown = re.sub(r"^- (.*)", r"<li>\1</li>", markdown, flags=re.MULTILINE)
-        markdown = re.sub(
-            r"(<li>.*</li>\n)+", r"<ul>\g<0></ul>", markdown, flags=re.DOTALL
-        )
+        markdown = re.sub(r"(<li>.*</li>\n)+", r"<ul>\g<0></ul>", markdown, flags=re.DOTALL)
 
         # Convert bold
         markdown = re.sub(r"\*\*(.*?)\*\*", r"<strong>\1</strong>", markdown)
@@ -219,11 +218,7 @@ pip install confluence-markdown=={version.lstrip('v')}
             line = line.strip()
 
             # Only wrap in paragraphs if not already HTML and not a placeholder
-            if (
-                line
-                and not line.startswith("<")
-                and not line.startswith("__CODE_BLOCK_")
-            ):
+            if line and not line.startswith("<") and not line.startswith("__CODE_BLOCK_"):
                 line = f"<p>{line}</p>"
             result.append(line)
 
@@ -241,9 +236,7 @@ pip install confluence-markdown=={version.lstrip('v')}
                     f"<ac:plain-text-body><![CDATA[{content}]]></ac:plain-text-body>"
                     f"</ac:structured-macro>"
                 )
-                final_result = final_result.replace(
-                    f"__CODE_BLOCK_{i}__", confluence_code
-                )
+                final_result = final_result.replace(f"__CODE_BLOCK_{i}__", confluence_code)
 
         return final_result
 
@@ -275,9 +268,7 @@ pip install confluence-markdown=={version.lstrip('v')}
         }
 
         session = self.get_session()
-        response = session.get(
-            url, headers=self.get_auth_headers(), params=params, timeout=30
-        )
+        response = session.get(url, headers=self.get_auth_headers(), params=params, timeout=30)
 
         if response.status_code == 200:
             data = response.json()
@@ -335,7 +326,7 @@ pip install confluence-markdown=={version.lstrip('v')}
             print(f"Error publishing to Confluence: {e}")
             return False
 
-    def _find_existing_page(self, title: str) -> Optional[Dict[str, Any]]:
+    def _find_existing_page(self, title: str) -> Optional[dict[str, Any]]:
         """
         Return the first Confluence page matching the given title in the configured space, or None if not found.
 
@@ -349,9 +340,7 @@ pip install confluence-markdown=={version.lstrip('v')}
         }
 
         session = self.get_session()
-        response = session.get(
-            url, headers=self.get_auth_headers(), params=params, timeout=30
-        )
+        response = session.get(url, headers=self.get_auth_headers(), params=params, timeout=30)
 
         if response.status_code == 200:
             data = response.json()
@@ -371,7 +360,7 @@ pip install confluence-markdown=={version.lstrip('v')}
         """
         url = f"{self.confluence_url}/rest/api/content"
 
-        page_data: Dict[str, Any] = {
+        page_data: dict[str, Any] = {
             "type": "page",
             "title": title,
             "space": {"key": self.confluence_space},
@@ -390,18 +379,14 @@ pip install confluence-markdown=={version.lstrip('v')}
 
         if response.status_code // 100 == 2:  # Accept any 2xx success code
             page_info = response.json()
-            page_url = (
-                f"{self.confluence_url}/pages/viewpage.action?pageId={page_info['id']}"
-            )
+            page_url = f"{self.confluence_url}/pages/viewpage.action?pageId={page_info['id']}"
             print(f"✅ Created Confluence page: {page_url}")
             return True
         else:
             print(f"❌ Failed to create page: {response.status_code} - {response.text}")
             return False
 
-    def _update_page(
-        self, page_id: str, title: str, content: str, current_version: int
-    ) -> bool:
+    def _update_page(self, page_id: str, title: str, content: str, current_version: int) -> bool:
         """
         Update an existing Confluence page by sending a PUT request that increments its version.
 
@@ -419,7 +404,7 @@ pip install confluence-markdown=={version.lstrip('v')}
         """
         url = f"{self.confluence_url}/rest/api/content/{page_id}"
 
-        page_data: Dict[str, Any] = {
+        page_data: dict[str, Any] = {
             "version": {"number": current_version + 1},
             "title": title,
             "type": "page",
@@ -456,9 +441,7 @@ def main() -> None:
     """
     if len(sys.argv) != 3:
         print("Usage: publish_release.py <version> <release_notes>")
-        print(
-            "Example: publish_release.py v1.0.0 'Initial release with awesome features'"
-        )
+        print("Example: publish_release.py v1.0.0 'Initial release with awesome features'")
         sys.exit(1)
 
     version = sys.argv[1]
@@ -469,9 +452,7 @@ def main() -> None:
         success = publisher.publish_release_notes(version, release_notes)
 
         if success:
-            print(
-                f"🎉 Successfully published release notes for {version} to Confluence!"
-            )
+            print(f"🎉 Successfully published release notes for {version} to Confluence!")
             sys.exit(0)
         else:
             print(f"❌ Failed to publish release notes for {version}")
