@@ -1,6 +1,6 @@
 ---
 title: "Basic Example Page"
-confluence-page-id: 123456
+confluence-page-id: "123456"
 jira-epic: CMD-XX
 ---
 
