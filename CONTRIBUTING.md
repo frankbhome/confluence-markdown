@@ -127,7 +127,7 @@ Helpful docs:
 - Run:
 
   ```bash
-  poetry run pytest --cov=confluence_markdown --cov-report=term-missing --cov-fail-under=80
+  poetry run pytest --cov=scripts --cov-report=term-missing --cov-fail-under=80
   ```
 
 - Target coverage: **≥80%** (green). PRs with lower coverage may be
