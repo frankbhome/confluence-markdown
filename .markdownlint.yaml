@@ -7,3 +7,7 @@ MD041: false
 
 # Allow duplicate headings in changelogs (common for Added/Changed/Fixed sections)
 MD024: false
+
+# Allow multiple H1 headings for documents with YAML frontmatter
+# The title in frontmatter is often considered an H1 by the linter
+MD025: false
