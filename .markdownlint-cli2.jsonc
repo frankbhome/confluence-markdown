@@ -1,9 +1,10 @@
 {
   // markdownlint-cli2 configuration for CodeRabbit integration
   "config": {
-    // Use the project's markdownlint configuration as base
-    "extends": ".markdownlint.yaml",
-    // Disable MD025 for files with frontmatter since front_matter_title doesn't work reliably
+    // Inline configuration to ensure MD025 is properly disabled for CI
+    "default": true,
+    "MD041": false,
+    "MD024": false,
     "MD025": false
   },
   "globs": [
