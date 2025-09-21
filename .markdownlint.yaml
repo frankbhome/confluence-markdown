@@ -7,3 +7,7 @@ MD041: false
 
 # Allow duplicate headings in changelogs (common for Added/Changed/Fixed sections)
 MD024: false
+
+# Treat frontmatter "title" as the H1 to avoid false positives, while keeping single‑H1 enforcement
+MD025:
+  front_matter_title: title

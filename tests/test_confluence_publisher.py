@@ -31,7 +31,10 @@ class TestMarkdownConversion:
             "GITHUB_REPOSITORY": "test/repo",
         }
 
-        with patch("scripts.publish_release.config", side_effect=lambda key, default="": config_values.get(key, default)):
+        with patch(
+            "scripts.publish_release.config",
+            side_effect=lambda key, default="": config_values.get(key, default),
+        ):
             self.publisher = ConfluencePublisher()
 
     def test_convert_headers(self) -> None:
@@ -160,7 +163,10 @@ class TestConfluencePublisher:
             "CONFLUENCE_SPACE": "TEST",
         }
 
-        with patch("scripts.publish_release.config", side_effect=lambda key, default="": config_values.get(key, default)):
+        with patch(
+            "scripts.publish_release.config",
+            side_effect=lambda key, default="": config_values.get(key, default),
+        ):
             publisher = ConfluencePublisher()
 
             # Mock the _find_existing_page method
@@ -186,7 +192,10 @@ class TestConfluencePublisher:
             "GITHUB_REPOSITORY": "test/repo",
         }
 
-        with patch("scripts.publish_release.config", side_effect=lambda key, default="": config_values.get(key, default)):
+        with patch(
+            "scripts.publish_release.config",
+            side_effect=lambda key, default="": config_values.get(key, default),
+        ):
             publisher = ConfluencePublisher()
 
             title = "Release v1.0.0 - confluence-markdown"
@@ -211,7 +220,10 @@ class TestConfluencePublisher:
             "CONFLUENCE_PARENT_PAGE": "Release Notes",
         }
 
-        with patch("scripts.publish_release.config", side_effect=lambda key, default="": config_values.get(key, default)):
+        with patch(
+            "scripts.publish_release.config",
+            side_effect=lambda key, default="": config_values.get(key, default),
+        ):
             publisher = ConfluencePublisher()
 
             # Mock session and its methods
@@ -234,7 +246,10 @@ class TestConfluencePublisher:
         # Test missing required configuration
         empty_config_values = {}
 
-        with patch("scripts.publish_release.config", side_effect=lambda key, default="": empty_config_values.get(key, default)):
+        with patch(
+            "scripts.publish_release.config",
+            side_effect=lambda key, default="": empty_config_values.get(key, default),
+        ):
             with pytest.raises(
                 ValueError, match="Missing required Confluence configuration"
             ):
@@ -247,7 +262,10 @@ class TestConfluencePublisher:
             # Missing TOKEN and SPACE
         }
 
-        with patch("scripts.publish_release.config", side_effect=lambda key, default="": partial_config_values.get(key, default)):
+        with patch(
+            "scripts.publish_release.config",
+            side_effect=lambda key, default="": partial_config_values.get(key, default),
+        ):
             with pytest.raises(
                 ValueError, match="Missing required Confluence configuration"
             ):
@@ -267,7 +285,10 @@ class TestEndToEndPublishing:
             "CONFLUENCE_SPACE": "TEST",
         }
 
-        with patch("scripts.publish_release.config", side_effect=lambda key, default="": config_values.get(key, default)):
+        with patch(
+            "scripts.publish_release.config",
+            side_effect=lambda key, default="": config_values.get(key, default),
+        ):
             publisher = ConfluencePublisher()
 
             # Mock session and its methods
@@ -303,7 +324,10 @@ class TestEndToEndPublishing:
             "CONFLUENCE_SPACE": "TEST",
         }
 
-        with patch("scripts.publish_release.config", side_effect=lambda key, default="": config_values.get(key, default)):
+        with patch(
+            "scripts.publish_release.config",
+            side_effect=lambda key, default="": config_values.get(key, default),
+        ):
             publisher = ConfluencePublisher()
 
             # Mock session and its methods
@@ -342,7 +366,10 @@ class TestEndToEndPublishing:
             "CONFLUENCE_SPACE": "TEST",
         }
 
-        with patch("scripts.publish_release.config", side_effect=lambda key, default="": config_values.get(key, default)):
+        with patch(
+            "scripts.publish_release.config",
+            side_effect=lambda key, default="": config_values.get(key, default),
+        ):
             publisher = ConfluencePublisher()
 
             # Mock session and its methods
