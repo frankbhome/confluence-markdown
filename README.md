@@ -1,22 +1,36 @@
 # confluence-markdown
 
-A Python-based tool to synchronise documents between **Markdown** (in Git) and
-**Confluence** pages, supporting two-way conversion and CI/CD automation.
+A Python-based tool to synchronize documents between Markdown (in Git) and
+Confluence pages. The project aims to support two‑way conversion and CI/CD
+automation.
 
 ---
 
 ## 🚀 Features
 
-- Note: These features are planned but not yet implemented.
-- Convert Markdown → Confluence (publish to pages via REST API).
-- Convert Confluence → Markdown (store as version-controlled files in Git).
-- Support for headings, lists, tables, code blocks.
-- CLI tool `conmd` for push/pull/sync operations.
-- CI/CD ready: publish approved Markdown from GitHub Actions into Confluence.
+Currently: Pre‑alpha; APIs and CLI subject to change.
+
+### ✅ Current
+
+- Project scaffolding and documentation.
+
+### 🗺️ Roadmap
+
+- [ ] Markdown → Confluence (publish via REST API).
+- [ ] Confluence → Markdown (versioned files in Git).
+- [ ] Formatting coverage: headings, lists, tables, code blocks.
+- [ ] CLI `conmd` for push/pull/sync operations.
+- [ ] CI/CD: publish approved Markdown from GitHub Actions to Confluence.
 
 ---
 
 ## 📦 Getting Started
+
+### Prerequisites
+
+- Python 3.11+ recommended
+- Poetry installed: [Installation Guide](https://python-poetry.org/docs/#installation)
+- A Confluence Cloud/Server base URL and API token (see Atlassian docs)
 
 ### 1. Install dependencies
 
@@ -24,13 +38,22 @@ A Python-based tool to synchronise documents between **Markdown** (in Git) and
 poetry install
 ```
 
-### 2. Run CLI
+### 2. Configure credentials (environment variables)
 
 ```bash
-poetry run conmd
+export CONFLUENCE_BASE_URL="https://your-domain.atlassian.net/wiki"
+export CONFLUENCE_SPACE_KEY="ENG"
+export CONFLUENCE_USER_EMAIL="you@example.com"
+export CONFLUENCE_API_TOKEN="xxxx"
 ```
 
-### 3. Run tests
+### 3. Run CLI
+
+```bash
+poetry run conmd --help
+```
+
+### 4. Run tests
 
 ```bash
 poetry run pytest
