@@ -2,8 +2,7 @@
   "config": {
     "default": true,
     "MD041": false,
-    "MD024": false,
-    "MD025": false
+    "MD024": false
   },
   "globs": [
     "**/*.md",
@@ -14,7 +13,8 @@
     "**/dist/**",
     "**/build/**",
     "**/.venv/**",
-    "**/venv/**"
+    "**/venv/**",
+    "docs/examples/*.md"
   ],
   "fix": false,
   "showFound": true
