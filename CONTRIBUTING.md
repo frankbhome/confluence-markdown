@@ -14,6 +14,8 @@ See the full terms in [LICENSE](./LICENSE).
    ```bash
    git clone https://github.com/<your-fork>/confluence-markdown.git
    cd confluence-markdown
+   git remote add upstream https://github.com/frankbhome/confluence-markdown.git
+   git fetch upstream
    ```
 
 2. **Set up the Poetry environment**
@@ -21,6 +23,8 @@ See the full terms in [LICENSE](./LICENSE).
    ```bash
    poetry install
    poetry run pre-commit install
+   # Install commit message validation (Conventional Commits enforcement):
+   poetry run pre-commit install --hook-type commit-msg
    ```
 
 3. **Verify your setup**
@@ -35,10 +39,13 @@ See the full terms in [LICENSE](./LICENSE).
 ## 📝 Coding Standards
 
 - **Language**: Python 3.12+
-- **Formatting**: Black (line length 100)
+- **Formatting**: Ruff (line length 100) - single formatter
 - **Linting**: Ruff
 - **Typing**: Mypy (strict mode)
 - **YAML**: yamllint
+
+**Note**: Ruff handles both linting and formatting. Configure line-length = 100
+in pyproject.toml under [tool.ruff] to maintain consistency.
 
 Run all checks locally:
 
@@ -50,12 +57,12 @@ Common one-offs:
 
 ```bash
 poetry run ruff check --fix .
-poetry run black .
+poetry run ruff format .
 poetry run mypy .
 poetry run yamllint .
 ```
 
-Configs are in pyproject.toml (Black/Ruff/Mypy) and .pre-commit-config.yaml.
+Configs are in pyproject.toml (Ruff/Mypy) and .pre-commit-config.yaml.
 Please keep them in sync.
 
 ---
@@ -72,8 +79,8 @@ docs/                      # Style guide & examples
 Helpful docs:
 
 - Style Guide: [`docs/style-guide.md`](./docs/style-guide.md)
-- Examples: [`docs/examples/`](./docs/examples/) (basic page, requirements
-  page, design page)
+- Examples: [`docs/examples/`](./docs/examples/) (basic page, requirements page,
+  design page)
 
 ---
 
@@ -99,6 +106,11 @@ Helpful docs:
 
    See: [Conventional Commits Specification](https://www.conventionalcommits.org)
 
+   Tips:
+   - Use scopes when helpful, e.g., `feat(cli): ...`, `fix(sync): ...`
+   - Breaking changes: `feat!: ...` and include `BREAKING CHANGE:` footer
+   - Reference issues: `Closes #123` or JIRA keys when applicable (e.g., `CMD-34`)
+
    Example:
 
    ```text
@@ -115,7 +127,7 @@ Helpful docs:
 - Run:
 
   ```bash
-  poetry run pytest --cov=confluence_markdown --cov-report=term-missing
+  poetry run pytest --cov=confluence_markdown --cov-report=term-missing --cov-fail-under=80
   ```
 
 - Target coverage: **≥80%** (green). PRs with lower coverage may be
@@ -134,17 +146,22 @@ poetry run cz bump --increment [patch|minor|major]
 git push --follow-tags
 ```
 
-GitHub Actions builds and attaches artifacts (wheel + sdist) to the GitHub
-Release.
+GitHub Actions (see [.github/workflows/release.yml](./.github/workflows/release.yml))
+builds and attaches artifacts (wheel + sdist) to the GitHub Release.
+
+**Note**: Currently, packages are distributed via GitHub Releases only.
+PyPI publishing is not configured. If PyPI distribution is needed in the future,
+it would require adding PyPI tokens to GitHub Secrets and updating the release
+workflow with publishing steps.
 
 ---
 
 ## 🛡️ Code of Conduct
 
-All contributors are expected to follow our **Code of Conduct**
+All contributors are expected to follow our **[Code of Conduct](./CODE_OF_CONDUCT.md)**
 (Contributor Covenant 2.1).
-Reports can be made via
-[**GitHub's Report Abuse form**](https://github.com/contact/report-abuse).
+Reports can be made via [GitHub's Report Abuse form](https://github.com/contact/report-abuse)
+or by contacting the project maintainers directly through GitHub Issues.
 
 ---
 
@@ -155,6 +172,18 @@ Reports can be made via
   `JIRA_API_TOKEN`).
 - In CI, store secrets in **GitHub Actions Secrets** and consume at runtime.
 - Prefer least-privilege tokens and rotate regularly (e.g., every 90 days).
+- Enable secret scanning:
+  - Locally via pre-commit (e.g., gitleaks or detect-secrets)
+  - In CI via a dedicated job that fails on findings
+
+Example (pre-commit):
+
+```yaml
+- repo: https://github.com/gitleaks/gitleaks
+  rev: v8.18.4
+  hooks:
+    - id: gitleaks
+```
 
 ---
 
@@ -170,8 +199,10 @@ Reports can be made via
 ## 🙏 Getting Help
 
 - Open a **GitHub Issue** for bugs and feature requests.
+- Use the provided issue templates for better triage.
 - Check Confluence for requirements and design documentation.
-- For general questions, start a **GitHub Discussion** or open a **draft PR**.
+- For general questions, start a **GitHub Discussion** (if enabled) or open a
+  **draft PR**.
 
 ---
 
