@@ -5,11 +5,21 @@ import pytest
 from unittest.mock import Mock, patch
 import sys
 import os
+from typing import Any
 
 # Add the project root to the Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from scripts.publish_release import ConfluencePublisher
+
+
+def mock_config(config_dict: dict[str, str]) -> Any:
+    """Helper function to create a properly typed mock config function."""
+
+    def config_func(key: str, default: str = "") -> str:
+        return config_dict.get(key, default)
+
+    return config_func
 
 
 class TestMarkdownConversion:
@@ -33,7 +43,7 @@ class TestMarkdownConversion:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             self.publisher = ConfluencePublisher()
 
@@ -165,7 +175,7 @@ class TestConfluencePublisher:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
 
@@ -194,7 +204,7 @@ class TestConfluencePublisher:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
 
@@ -222,7 +232,7 @@ class TestConfluencePublisher:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
 
@@ -244,11 +254,11 @@ class TestConfluencePublisher:
     def test_configuration_validation(self) -> None:
         """Test configuration validation."""
         # Test missing required configuration
-        empty_config_values = {}
+        empty_config_values: dict[str, str] = {}
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": empty_config_values.get(key, default),
+            side_effect=mock_config(empty_config_values),
         ):
             with pytest.raises(
                 ValueError, match="Missing required Confluence configuration"
@@ -264,7 +274,7 @@ class TestConfluencePublisher:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": partial_config_values.get(key, default),
+            side_effect=mock_config(partial_config_values),
         ):
             with pytest.raises(
                 ValueError, match="Missing required Confluence configuration"
@@ -287,7 +297,7 @@ class TestEndToEndPublishing:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
 
@@ -326,7 +336,7 @@ class TestEndToEndPublishing:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
 
@@ -368,7 +378,7 @@ class TestEndToEndPublishing:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
 

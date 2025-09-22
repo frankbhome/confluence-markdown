@@ -44,7 +44,7 @@ poetry install
 export CONFLUENCE_BASE_URL="https://your-domain.atlassian.net/wiki"
 export CONFLUENCE_SPACE_KEY="ENG"
 export CONFLUENCE_USER_EMAIL="you@example.com"
-export CONFLUENCE_API_TOKEN="xxxx"
+export CONFLUENCE_TOKEN="xxxx"
 ```
 
 ### 3. Run CLI
@@ -75,6 +75,31 @@ poetry run pytest
 
 Please see our [Contributing Guidelines](CONTRIBUTING.md).
 All participants are expected to follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+
+---
+
+## 🛡️ Security
+
+- API tokens (Confluence, JIRA) must never be committed to the repository.
+- Use environment variables (CONFLUENCE_TOKEN, JIRA_TOKEN) for local development.
+- In CI/CD pipelines, store tokens in GitHub Secrets and access them
+  securely at runtime.
+- Rotate API tokens regularly (recommended every 90 days).
+- The project follows the principle of least privilege — tokens should only
+  have the minimum scope required.
+
+---
+
+## ⚠️ Safety
+
+- This tool only reads/writes Markdown files and Confluence pages.
+- It does not modify or delete files outside the project’s configured scope.
+- Always test sync operations in a sandbox Confluence space
+  before enabling on production spaces.
+- Ensure requirements/design documentation is baselined before syncing, to avoid
+  accidental overwrites.
+- CI/CD pipelines should be configured to only publish approved Markdown
+  changes from main or release branches.
 
 ---
 

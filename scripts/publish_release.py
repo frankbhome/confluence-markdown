@@ -5,14 +5,22 @@ This script automatically publishes release notes to Confluence
 when a new GitHub release is created.
 """
 
+import json
 import re
 import sys
-import json
+from typing import Any, Optional, TYPE_CHECKING
+
 import requests
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
-from typing import Dict, Optional, Any
 from decouple import config  # type: ignore
+from requests.adapters import HTTPAdapter
+
+if TYPE_CHECKING:
+    from urllib3.util.retry import Retry
+else:
+    try:
+        from urllib3.util.retry import Retry
+    except ImportError:
+        from requests.packages.urllib3.util.retry import Retry  # type: ignore
 
 
 class ConfluencePublisher:
@@ -27,7 +35,8 @@ class ConfluencePublisher:
         - CONFLUENCE_PARENT_PAGE, GITHUB_REPOSITORY (optional)
 
         Raises:
-            ValueError: If any of the required Confluence settings (URL, user, token, space) are missing.
+            ValueError: If any of the required Confluence settings (URL, user, token, space)
+                are missing.
         """
         self.confluence_url = str(config("CONFLUENCE_URL", default=""))  # type: ignore
         self.confluence_user = str(config("CONFLUENCE_USER", default=""))  # type: ignore
@@ -45,10 +54,11 @@ class ConfluencePublisher:
             ]
         ):
             raise ValueError(
-                "Missing required Confluence configuration (URL, user, token, and space are required)"
+                "Missing required Confluence configuration "
+                "(URL, user, token, and space are required)"
             )
 
-    def get_auth_headers(self) -> Dict[str, str]:
+    def get_auth_headers(self) -> dict[str, str]:
         """
         Return HTTP headers configured for Confluence REST API requests.
 
@@ -72,10 +82,10 @@ class ConfluencePublisher:
         Create a requests session with retry logic and timeout configuration.
 
         Returns:
-            requests.Session: Configured session with retry logic for transient failures.
+            requests.Session: Session configured with retry strategy for resilient HTTP requests.
         """
         session = requests.Session()
-        retry = Retry(
+        retry: Retry = Retry(
             total=3,
             backoff_factor=1,
             status_forcelist=[500, 502, 503, 504],
@@ -90,7 +100,7 @@ class ConfluencePublisher:
         self, title: str, version: str, release_notes: str
     ) -> str:
         """
-        Builds Confluence storage-format HTML for a release page including header, release notes, installation snippet, and metadata.
+        Build Confluence storage-format HTML for a release page including header, release notes, installation snippet, and metadata.
 
         The generated content includes:
         - An H1 title ("Release {version}") and the current date.
@@ -116,7 +126,7 @@ class ConfluencePublisher:
         confluence_content = f"""
 <h1>Release {version}</h1>
 <p><strong>Release Date:</strong> {self._get_current_date()}</p>
-{f'<p><strong>GitHub Tag:</strong> <a href="{github_url}">{version}</a></p>' if github_url else ''}
+{f'<p><strong>GitHub Tag:</strong> <a href="{github_url}">{version}</a></p>' if github_url else ""}
 
 <h2>Release Notes</h2>
 {self._convert_markdown_to_confluence(release_notes)}
@@ -125,7 +135,7 @@ class ConfluencePublisher:
 <ac:structured-macro ac:name="code" ac:schema-version="1">
 <ac:parameter ac:name="language">bash</ac:parameter>
 <ac:plain-text-body><![CDATA[
-pip install confluence-markdown=={version.lstrip('v')}
+pip install confluence-markdown=={version.lstrip("v")}
 ]]></ac:plain-text-body>
 </ac:structured-macro>
 
@@ -335,7 +345,7 @@ pip install confluence-markdown=={version.lstrip('v')}
             print(f"Error publishing to Confluence: {e}")
             return False
 
-    def _find_existing_page(self, title: str) -> Optional[Dict[str, Any]]:
+    def _find_existing_page(self, title: str) -> Optional[dict[str, Any]]:
         """
         Return the first Confluence page matching the given title in the configured space, or None if not found.
 
@@ -371,7 +381,7 @@ pip install confluence-markdown=={version.lstrip('v')}
         """
         url = f"{self.confluence_url}/rest/api/content"
 
-        page_data: Dict[str, Any] = {
+        page_data: dict[str, Any] = {
             "type": "page",
             "title": title,
             "space": {"key": self.confluence_space},
@@ -387,7 +397,6 @@ pip install confluence-markdown=={version.lstrip('v')}
         response = session.post(
             url, headers=self.get_auth_headers(), data=json.dumps(page_data), timeout=30
         )
-
         if response.status_code // 100 == 2:  # Accept any 2xx success code
             page_info = response.json()
             page_url = (
@@ -419,7 +428,7 @@ pip install confluence-markdown=={version.lstrip('v')}
         """
         url = f"{self.confluence_url}/rest/api/content/{page_id}"
 
-        page_data: Dict[str, Any] = {
+        page_data: dict[str, Any] = {
             "version": {"number": current_version + 1},
             "title": title,
             "type": "page",
