@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Tests for Confluence Publisher functionality."""
 
+import os
 import sys
-from unittest.mock import patch, Mock
+from typing import Any
+from unittest.mock import Mock, patch
+
 import pytest
 
 # Add the project root to the Python path
@@ -409,7 +412,7 @@ class TestParentPageHandling:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
             result = publisher.find_parent_page_id()
@@ -429,7 +432,7 @@ class TestParentPageHandling:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
 
@@ -462,7 +465,7 @@ class TestPageCreationAndUpdateFailures:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
 
@@ -500,7 +503,7 @@ class TestPageCreationAndUpdateFailures:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
 
@@ -541,7 +544,7 @@ class TestPageCreationAndUpdateFailures:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
 
