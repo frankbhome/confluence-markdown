@@ -555,12 +555,15 @@ class TestPageCreationAndUpdateFailures:
             # Mock GET requests
             # First call: check if release page exists (it doesn't)
             # Second call: find parent page
-            get_responses = [
-                Mock(status_code=200, **{"json.return_value": {"results": []}}),  # No release page
-                Mock(
-                    status_code=200, **{"json.return_value": {"results": [{"id": "parent123"}]}}
-                ),  # Parent exists
-            ]
+            mock_no_release_response = Mock()
+            mock_no_release_response.status_code = 200
+            mock_no_release_response.json.return_value = {"results": []}
+
+            mock_parent_response = Mock()
+            mock_parent_response.status_code = 200
+            mock_parent_response.json.return_value = {"results": [{"id": "parent123"}]}
+
+            get_responses = [mock_no_release_response, mock_parent_response]
             mock_session.get.side_effect = get_responses
 
             # Mock POST request (creation succeeds)
