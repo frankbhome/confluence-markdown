@@ -96,9 +96,7 @@ class ConfluencePublisher:
         session.mount("http://", adapter)
         return session
 
-    def create_confluence_content(
-        self, title: str, version: str, release_notes: str
-    ) -> str:
+    def create_confluence_content(self, title: str, version: str, release_notes: str) -> str:
         """
         Build Confluence storage-format HTML for a release page including header, release notes, installation snippet, and metadata.
 
@@ -208,9 +206,7 @@ pip install confluence-markdown=={version.lstrip("v")}
 
         # Convert lists
         markdown = re.sub(r"^- (.*)", r"<li>\1</li>", markdown, flags=re.MULTILINE)
-        markdown = re.sub(
-            r"(<li>.*</li>\n)+", r"<ul>\g<0></ul>", markdown, flags=re.DOTALL
-        )
+        markdown = re.sub(r"(<li>.*</li>\n)+", r"<ul>\g<0></ul>", markdown, flags=re.DOTALL)
 
         # Convert bold
         markdown = re.sub(r"\*\*(.*?)\*\*", r"<strong>\1</strong>", markdown)
@@ -229,11 +225,7 @@ pip install confluence-markdown=={version.lstrip("v")}
             line = line.strip()
 
             # Only wrap in paragraphs if not already HTML and not a placeholder
-            if (
-                line
-                and not line.startswith("<")
-                and not line.startswith("__CODE_BLOCK_")
-            ):
+            if line and not line.startswith("<") and not line.startswith("__CODE_BLOCK_"):
                 line = f"<p>{line}</p>"
             result.append(line)
 
@@ -251,9 +243,7 @@ pip install confluence-markdown=={version.lstrip("v")}
                     f"<ac:plain-text-body><![CDATA[{content}]]></ac:plain-text-body>"
                     f"</ac:structured-macro>"
                 )
-                final_result = final_result.replace(
-                    f"__CODE_BLOCK_{i}__", confluence_code
-                )
+                final_result = final_result.replace(f"__CODE_BLOCK_{i}__", confluence_code)
 
         return final_result
 
@@ -285,9 +275,7 @@ pip install confluence-markdown=={version.lstrip("v")}
         }
 
         session = self.get_session()
-        response = session.get(
-            url, headers=self.get_auth_headers(), params=params, timeout=30
-        )
+        response = session.get(url, headers=self.get_auth_headers(), params=params, timeout=30)
 
         if response.status_code == 200:
             data = response.json()
@@ -359,9 +347,7 @@ pip install confluence-markdown=={version.lstrip("v")}
         }
 
         session = self.get_session()
-        response = session.get(
-            url, headers=self.get_auth_headers(), params=params, timeout=30
-        )
+        response = session.get(url, headers=self.get_auth_headers(), params=params, timeout=30)
 
         if response.status_code == 200:
             data = response.json()
@@ -399,18 +385,14 @@ pip install confluence-markdown=={version.lstrip("v")}
         )
         if response.status_code // 100 == 2:  # Accept any 2xx success code
             page_info = response.json()
-            page_url = (
-                f"{self.confluence_url}/pages/viewpage.action?pageId={page_info['id']}"
-            )
+            page_url = f"{self.confluence_url}/pages/viewpage.action?pageId={page_info['id']}"
             print(f"✅ Created Confluence page: {page_url}")
             return True
         else:
             print(f"❌ Failed to create page: {response.status_code} - {response.text}")
             return False
 
-    def _update_page(
-        self, page_id: str, title: str, content: str, current_version: int
-    ) -> bool:
+    def _update_page(self, page_id: str, title: str, content: str, current_version: int) -> bool:
         """
         Update an existing Confluence page by sending a PUT request that increments its version.
 
@@ -465,9 +447,7 @@ def main() -> None:
     """
     if len(sys.argv) != 3:
         print("Usage: publish_release.py <version> <release_notes>")
-        print(
-            "Example: publish_release.py v1.0.0 'Initial release with awesome features'"
-        )
+        print("Example: publish_release.py v1.0.0 'Initial release with awesome features'")
         sys.exit(1)
 
     version = sys.argv[1]
@@ -478,9 +458,7 @@ def main() -> None:
         success = publisher.publish_release_notes(version, release_notes)
 
         if success:
-            print(
-                f"🎉 Successfully published release notes for {version} to Confluence!"
-            )
+            print(f"🎉 Successfully published release notes for {version} to Confluence!")
             sys.exit(0)
         else:
             print(f"❌ Failed to publish release notes for {version}")

@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 """Tests for Confluence Publisher functionality."""
 
-import pytest
-from unittest.mock import Mock, patch
-import sys
 import os
 from typing import Any
 
@@ -260,9 +257,7 @@ class TestConfluencePublisher:
             "scripts.publish_release.config",
             side_effect=mock_config(empty_config_values),
         ):
-            with pytest.raises(
-                ValueError, match="Missing required Confluence configuration"
-            ):
+            with pytest.raises(ValueError, match="Missing required Confluence configuration"):
                 ConfluencePublisher()
 
         # Test partial configuration
@@ -276,9 +271,7 @@ class TestConfluencePublisher:
             "scripts.publish_release.config",
             side_effect=mock_config(partial_config_values),
         ):
-            with pytest.raises(
-                ValueError, match="Missing required Confluence configuration"
-            ):
+            with pytest.raises(ValueError, match="Missing required Confluence configuration"):
                 ConfluencePublisher()
 
 
@@ -397,3 +390,305 @@ class TestEndToEndPublishing:
 
             assert result is False
             assert mock_session.get.called
+
+
+class TestParentPageHandling:
+    """Test parent page functionality."""
+
+    @patch("scripts.publish_release.requests.Session")
+    def test_find_parent_page_id_no_parent_configured(self, mock_session_class: Mock) -> None:
+        """Test finding parent page ID when no parent is configured."""
+        config_values = {
+            "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+            "CONFLUENCE_USER": "test@example.com",
+            "CONFLUENCE_TOKEN": "test_token",
+            "CONFLUENCE_SPACE": "TEST",
+            "CONFLUENCE_PARENT_PAGE": "",  # No parent page configured
+        }
+
+        with patch(
+            "scripts.publish_release.config",
+            side_effect=lambda key, default="": config_values.get(key, default),
+        ):
+            publisher = ConfluencePublisher()
+            result = publisher.find_parent_page_id()
+
+            assert result is None
+
+    @patch("scripts.publish_release.requests.Session")
+    def test_find_parent_page_id_no_results(self, mock_session_class: Mock) -> None:
+        """Test finding parent page ID when API returns no results."""
+        config_values = {
+            "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+            "CONFLUENCE_USER": "test@example.com",
+            "CONFLUENCE_TOKEN": "test_token",
+            "CONFLUENCE_SPACE": "TEST",
+            "CONFLUENCE_PARENT_PAGE": "Non-existent Page",
+        }
+
+        with patch(
+            "scripts.publish_release.config",
+            side_effect=lambda key, default="": config_values.get(key, default),
+        ):
+            publisher = ConfluencePublisher()
+
+            # Mock session and response
+            mock_session = Mock()
+            mock_session_class.return_value = mock_session
+
+            mock_response = Mock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {"results": []}  # No results
+            mock_session.get.return_value = mock_response
+
+            result = publisher.find_parent_page_id()
+
+            assert result is None
+
+
+class TestPageCreationAndUpdateFailures:
+    """Test error handling in page creation and updates."""
+
+    @patch("scripts.publish_release.requests.Session")
+    def test_create_page_failure(self, mock_session_class: Mock) -> None:
+        """Test page creation failure handling."""
+        config_values = {
+            "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+            "CONFLUENCE_USER": "test@example.com",
+            "CONFLUENCE_TOKEN": "test_token",
+            "CONFLUENCE_SPACE": "TEST",
+        }
+
+        with patch(
+            "scripts.publish_release.config",
+            side_effect=lambda key, default="": config_values.get(key, default),
+        ):
+            publisher = ConfluencePublisher()
+
+            # Mock session
+            mock_session = Mock()
+            mock_session_class.return_value = mock_session
+
+            # Mock GET request (page doesn't exist)
+            mock_get_response = Mock()
+            mock_get_response.status_code = 200
+            mock_get_response.json.return_value = {"results": []}
+            mock_session.get.return_value = mock_get_response
+
+            # Mock POST request (creation fails)
+            mock_post_response = Mock()
+            mock_post_response.status_code = 400
+            mock_post_response.text = "Bad Request"
+            mock_session.post.return_value = mock_post_response
+
+            result = publisher.publish_release_notes("v1.0.0", "Test release notes")
+
+            assert result is False
+            assert mock_session.get.called
+            assert mock_session.post.called
+
+    @patch("scripts.publish_release.requests.Session")
+    def test_update_page_failure(self, mock_session_class: Mock) -> None:
+        """Test page update failure handling."""
+        config_values = {
+            "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+            "CONFLUENCE_USER": "test@example.com",
+            "CONFLUENCE_TOKEN": "test_token",
+            "CONFLUENCE_SPACE": "TEST",
+        }
+
+        with patch(
+            "scripts.publish_release.config",
+            side_effect=lambda key, default="": config_values.get(key, default),
+        ):
+            publisher = ConfluencePublisher()
+
+            # Mock session
+            mock_session = Mock()
+            mock_session_class.return_value = mock_session
+
+            # Mock GET request (page exists)
+            mock_get_response = Mock()
+            mock_get_response.status_code = 200
+            mock_get_response.json.return_value = {
+                "results": [{"id": "123", "version": {"number": 1}}]
+            }
+            mock_session.get.return_value = mock_get_response
+
+            # Mock PUT request (update fails)
+            mock_put_response = Mock()
+            mock_put_response.status_code = 403
+            mock_put_response.text = "Forbidden"
+            mock_session.put.return_value = mock_put_response
+
+            result = publisher.publish_release_notes("v1.0.0", "Updated release notes")
+
+            assert result is False
+            assert mock_session.get.called
+            assert mock_session.put.called
+
+    @patch("scripts.publish_release.requests.Session")
+    def test_create_page_with_parent(self, mock_session_class: Mock) -> None:
+        """Test page creation with parent page configured."""
+        config_values = {
+            "CONFLUENCE_URL": "https://test.atlassian.net/wiki",
+            "CONFLUENCE_USER": "test@example.com",
+            "CONFLUENCE_TOKEN": "test_token",
+            "CONFLUENCE_SPACE": "TEST",
+            "CONFLUENCE_PARENT_PAGE": "Release Notes",
+        }
+
+        with patch(
+            "scripts.publish_release.config",
+            side_effect=lambda key, default="": config_values.get(key, default),
+        ):
+            publisher = ConfluencePublisher()
+
+            # Mock session
+            mock_session = Mock()
+            mock_session_class.return_value = mock_session
+
+            # Mock GET requests
+            # First call: check if release page exists (it doesn't)
+            # Second call: find parent page
+            get_responses = [
+                Mock(status_code=200, **{"json.return_value": {"results": []}}),  # No release page
+                Mock(
+                    status_code=200, **{"json.return_value": {"results": [{"id": "parent123"}]}}
+                ),  # Parent exists
+            ]
+            mock_session.get.side_effect = get_responses
+
+            # Mock POST request (creation succeeds)
+            mock_post_response = Mock()
+            mock_post_response.status_code = 201
+            mock_post_response.json.return_value = {"id": "new123"}
+            mock_session.post.return_value = mock_post_response
+
+            result = publisher.publish_release_notes("v1.0.0", "Test release notes")
+
+            assert result is True
+            assert mock_session.get.call_count == 2  # Check page exists + find parent
+            assert mock_session.post.called
+
+
+class TestMainFunction:
+    """Test the main CLI function."""
+
+    def test_main_incorrect_usage(self) -> None:
+        """Test main function with incorrect number of arguments."""
+        with patch("sys.argv", ["publish_release.py"]):
+            with patch("sys.exit") as mock_exit:
+                # Make sys.exit raise SystemExit to stop execution
+                mock_exit.side_effect = SystemExit(1)
+                with patch("builtins.print") as mock_print:
+                    from scripts.publish_release import main
+
+                    with pytest.raises(SystemExit):
+                        main()
+                    mock_exit.assert_called_with(1)
+                    mock_print.assert_any_call(
+                        "Usage: publish_release.py <version> <release_notes>"
+                    )
+
+    def test_main_correct_usage_success(self) -> None:
+        """Test main function with correct arguments and successful publishing."""
+        test_args = ["publish_release.py", "v1.0.0", "Test release notes"]
+
+        with patch("sys.argv", test_args):
+            with patch("sys.exit") as mock_exit:
+                mock_exit.side_effect = SystemExit(0)
+                with patch("scripts.publish_release.ConfluencePublisher") as mock_publisher_class:
+                    mock_publisher = Mock()
+                    mock_publisher.publish_release_notes.return_value = True
+                    mock_publisher_class.return_value = mock_publisher
+
+                    from scripts.publish_release import main
+
+                    with pytest.raises(SystemExit):
+                        main()
+
+                    mock_publisher.publish_release_notes.assert_called_with(
+                        "v1.0.0", "Test release notes"
+                    )
+                    mock_exit.assert_called_with(0)
+
+    def test_main_correct_usage_failure(self) -> None:
+        """Test main function with correct arguments but publishing failure."""
+        test_args = ["publish_release.py", "v1.0.0", "Test release notes"]
+
+        with patch("sys.argv", test_args):
+            with patch("sys.exit") as mock_exit:
+                mock_exit.side_effect = SystemExit(1)
+                with patch("scripts.publish_release.ConfluencePublisher") as mock_publisher_class:
+                    mock_publisher = Mock()
+                    mock_publisher.publish_release_notes.return_value = False
+                    mock_publisher_class.return_value = mock_publisher
+
+                    from scripts.publish_release import main
+
+                    with pytest.raises(SystemExit):
+                        main()
+
+                    mock_publisher.publish_release_notes.assert_called_with(
+                        "v1.0.0", "Test release notes"
+                    )
+                    mock_exit.assert_called_with(1)
+
+    def test_main_configuration_error(self) -> None:
+        """Test main function with configuration error."""
+        test_args = ["publish_release.py", "v1.0.0", "Test release notes"]
+
+        with patch("sys.argv", test_args):
+            with patch("sys.exit") as mock_exit:
+                mock_exit.side_effect = SystemExit(1)
+                with patch("scripts.publish_release.ConfluencePublisher") as mock_publisher_class:
+                    mock_publisher_class.side_effect = ValueError("Missing configuration")
+
+                    from scripts.publish_release import main
+
+                    with pytest.raises(SystemExit):
+                        main()
+
+                    mock_exit.assert_called_with(1)
+
+    def test_main_unexpected_error(self) -> None:
+        """Test main function with unexpected error."""
+        test_args = ["publish_release.py", "v1.0.0", "Test release notes"]
+
+        with patch("sys.argv", test_args):
+            with patch("sys.exit") as mock_exit:
+                mock_exit.side_effect = SystemExit(1)
+                with patch("scripts.publish_release.ConfluencePublisher") as mock_publisher_class:
+                    mock_publisher_class.side_effect = RuntimeError("Unexpected error")
+
+                    from scripts.publish_release import main
+
+                    with pytest.raises(SystemExit):
+                        main()
+
+                    mock_exit.assert_called_with(1)
+
+
+class TestModuleExecution:
+    """Test module execution."""
+
+    def test_name_main_execution(self) -> None:
+        """Test that the module can be executed directly."""
+        import os
+        import subprocess
+        import sys
+
+        # Get the path to the script
+        script_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "scripts",
+            "publish_release.py",
+        )
+
+        # Run the script with no arguments to trigger usage message
+        result = subprocess.run([sys.executable, script_path], capture_output=True, text=True)
+
+        # Should exit with code 1 due to incorrect usage
+        assert result.returncode == 1
+        assert "Usage:" in result.stdout

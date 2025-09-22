@@ -4,9 +4,9 @@ This module contains smoke tests to verify that the package
 is properly installed and core functionality works correctly.
 """
 
+import os
 import subprocess
 import sys
-import os
 from unittest.mock import patch
 
 
@@ -23,9 +23,7 @@ def test_smoke():
 def test_package_main_entry_point():
     """Test that the package main module can be executed."""
     # Test by running the module directly via subprocess
-    src_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"
-    )
+    src_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src")
 
     result = subprocess.run(
         [sys.executable, "-m", "confluence_markdown"],
@@ -86,8 +84,8 @@ def test_cli_configuration_validation():
 def test_confluence_publisher_import():
     """Test that ConfluencePublisher can be imported and basic functionality works."""
     # Add the scripts directory to path for import
-    import sys
     import os
+    import sys
 
     scripts_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts"
@@ -102,7 +100,7 @@ def test_confluence_publisher_import():
             "publish_release", os.path.join(scripts_path, "publish_release.py")
         )
         if spec is None or spec.loader is None:
-            assert False, "Could not load publish_release module"
+            raise AssertionError("Could not load publish_release module")
 
         publish_release = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(publish_release)
@@ -136,7 +134,7 @@ def test_confluence_publisher_import():
         assert True
 
     except Exception as e:
-        assert False, f"ConfluencePublisher basic functionality failed: {e}"
+        raise AssertionError(f"ConfluencePublisher basic functionality failed: {e}") from e
     finally:
         # Clean up path
         if scripts_path in sys.path:
