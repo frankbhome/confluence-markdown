@@ -8,7 +8,7 @@ when a new GitHub release is created.
 import json
 import re
 import sys
-from typing import Any, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
 import requests
 from decouple import config  # type: ignore
