@@ -3,6 +3,7 @@
 
 import os
 import sys
+from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest
@@ -11,6 +12,15 @@ import pytest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from scripts.publish_release import ConfluencePublisher
+
+
+def mock_config(config_dict: dict[str, str]) -> Any:
+    """Helper function to create a properly typed mock config function."""
+
+    def config_func(key: str, default: str = "") -> str:
+        return config_dict.get(key, default)
+
+    return config_func
 
 
 class TestMarkdownConversion:
@@ -34,7 +44,7 @@ class TestMarkdownConversion:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             self.publisher = ConfluencePublisher()
 
@@ -166,7 +176,7 @@ class TestConfluencePublisher:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
 
@@ -195,7 +205,7 @@ class TestConfluencePublisher:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
 
@@ -223,7 +233,7 @@ class TestConfluencePublisher:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
 
@@ -245,11 +255,11 @@ class TestConfluencePublisher:
     def test_configuration_validation(self) -> None:
         """Test configuration validation."""
         # Test missing required configuration
-        empty_config_values = {}
+        empty_config_values: dict[str, str] = {}
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": empty_config_values.get(key, default),
+            side_effect=mock_config(empty_config_values),
         ):
             with pytest.raises(ValueError, match="Missing required Confluence configuration"):
                 ConfluencePublisher()
@@ -263,7 +273,7 @@ class TestConfluencePublisher:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": partial_config_values.get(key, default),
+            side_effect=mock_config(partial_config_values),
         ):
             with pytest.raises(ValueError, match="Missing required Confluence configuration"):
                 ConfluencePublisher()
@@ -284,7 +294,7 @@ class TestEndToEndPublishing:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
 
@@ -323,7 +333,7 @@ class TestEndToEndPublishing:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
 
@@ -365,7 +375,7 @@ class TestEndToEndPublishing:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
 
@@ -402,7 +412,7 @@ class TestParentPageHandling:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
             result = publisher.find_parent_page_id()
@@ -422,7 +432,7 @@ class TestParentPageHandling:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
 
@@ -455,7 +465,7 @@ class TestPageCreationAndUpdateFailures:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
 
@@ -493,7 +503,7 @@ class TestPageCreationAndUpdateFailures:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
 
@@ -534,7 +544,7 @@ class TestPageCreationAndUpdateFailures:
 
         with patch(
             "scripts.publish_release.config",
-            side_effect=lambda key, default="": config_values.get(key, default),
+            side_effect=mock_config(config_values),
         ):
             publisher = ConfluencePublisher()
 
@@ -545,12 +555,15 @@ class TestPageCreationAndUpdateFailures:
             # Mock GET requests
             # First call: check if release page exists (it doesn't)
             # Second call: find parent page
-            get_responses = [
-                Mock(status_code=200, **{"json.return_value": {"results": []}}),  # No release page
-                Mock(
-                    status_code=200, **{"json.return_value": {"results": [{"id": "parent123"}]}}
-                ),  # Parent exists
-            ]
+            mock_no_release_response = Mock()
+            mock_no_release_response.status_code = 200
+            mock_no_release_response.json.return_value = {"results": []}
+
+            mock_parent_response = Mock()
+            mock_parent_response.status_code = 200
+            mock_parent_response.json.return_value = {"results": [{"id": "parent123"}]}
+
+            get_responses = [mock_no_release_response, mock_parent_response]
             mock_session.get.side_effect = get_responses
 
             # Mock POST request (creation succeeds)

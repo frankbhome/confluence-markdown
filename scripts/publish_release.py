@@ -8,12 +8,19 @@ when a new GitHub release is created.
 import json
 import re
 import sys
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import requests
 from decouple import config  # type: ignore
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+
+if TYPE_CHECKING:
+    from urllib3.util.retry import Retry
+else:
+    try:
+        from urllib3.util.retry import Retry
+    except ImportError:
+        from requests.packages.urllib3.util.retry import Retry  # type: ignore
 
 
 class ConfluencePublisher:
@@ -75,10 +82,10 @@ class ConfluencePublisher:
         Create a requests session with retry logic and timeout configuration.
 
         Returns:
-            requests.Session: Configured session with retry logic for transient failures.
+            requests.Session: Session configured with retry strategy for resilient HTTP requests.
         """
         session = requests.Session()
-        retry = Retry(
+        retry: Retry = Retry(
             total=3,
             backoff_factor=1,
             status_forcelist=[500, 502, 503, 504],
@@ -91,7 +98,7 @@ class ConfluencePublisher:
 
     def create_confluence_content(self, title: str, version: str, release_notes: str) -> str:
         """
-        Builds Confluence storage-format HTML for a release page including header, release notes, installation snippet, and metadata.
+        Build Confluence storage-format HTML for a release page including header, release notes, installation snippet, and metadata.
 
         The generated content includes:
         - An H1 title ("Release {version}") and the current date.
@@ -376,7 +383,6 @@ pip install confluence-markdown=={version.lstrip("v")}
         response = session.post(
             url, headers=self.get_auth_headers(), data=json.dumps(page_data), timeout=30
         )
-
         if response.status_code // 100 == 2:  # Accept any 2xx success code
             page_info = response.json()
             page_url = f"{self.confluence_url}/pages/viewpage.action?pageId={page_info['id']}"

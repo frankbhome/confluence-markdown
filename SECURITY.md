@@ -61,6 +61,12 @@ from Git.
 - **Cleanup**: Remove/revoke unused tokens immediately
 - **Access Review**: Review who has access to secrets in GitHub repo settings
 - **Encryption**: Use HTTPS/TLS only for all API communications
+- **Documentation**: Maintain a Token Register in Confluence
+  (Security Considerations page) with:
+  - Token purpose and scope
+  - Owner/responsible team
+  - Creation and expiry dates
+  - Rotation schedule
 
 ## Compliance
 
