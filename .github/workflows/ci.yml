@@ -60,7 +60,7 @@ jobs:
 
       - name: Tests
         run: |
-          poetry run pytest --cov=src --cov=scripts \
+          poetry run pytest --cov=src --cov=scripts --cov-branch \
             --cov-report=term-missing \
             --cov-report=xml \
             --cov-report=html \
