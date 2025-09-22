@@ -68,7 +68,7 @@ jobs:
 
       - name: Upload coverage reports to GitHub
         uses: actions/upload-artifact@v4
-        if: matrix.python-version == '3.12'
+        if: always() && matrix.python-version == '3.12'
         with:
           name: coverage-reports-${{ matrix.python-version }}
           path: |
