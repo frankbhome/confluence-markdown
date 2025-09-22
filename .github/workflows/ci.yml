@@ -36,6 +36,8 @@ jobs:
 
   build-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
@@ -81,7 +83,7 @@ jobs:
         if: matrix.python-version == '3.12'
         with:
           file: ./coverage.xml
-          flags: unittests
+          flags: unittests,py312
           name: codecov-umbrella
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
