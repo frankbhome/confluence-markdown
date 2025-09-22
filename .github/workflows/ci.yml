@@ -36,6 +36,8 @@ jobs:
 
   build-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
@@ -60,9 +62,31 @@ jobs:
 
       - name: Tests
         run: |
-          poetry run pytest --cov=scripts \
+          poetry run pytest --cov=src --cov=scripts --cov-branch \
             --cov-report=term-missing \
+            --cov-report=xml \
+            --cov-report=html \
             --cov-fail-under=80
+
+      - name: Upload coverage reports to GitHub
+        uses: actions/upload-artifact@v4
+        if: always() && matrix.python-version == '3.12'
+        with:
+          name: coverage-reports-${{ matrix.python-version }}
+          path: |
+            coverage.xml
+            htmlcov/
+          retention-days: 30
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: matrix.python-version == '3.12'
+        with:
+          file: ./coverage.xml
+          flags: unittests,py312
+          name: codecov-umbrella
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: CLI Smoke Test
         run: poetry run conmd
