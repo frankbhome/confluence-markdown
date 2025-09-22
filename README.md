@@ -1,5 +1,8 @@
 # confluence-markdown
 
+[![CI](https://github.com/frankbhome/confluence-markdown/actions/workflows/ci.yml/badge.svg)](https://github.com/frankbhome/confluence-markdown/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/frankbhome/confluence-markdown/branch/main/graph/badge.svg)](https://codecov.io/gh/frankbhome/confluence-markdown)
+
 A Python-based tool to synchronize documents between Markdown (in Git) and
 Confluence pages. The project aims to support two‑way conversion and CI/CD
 automation.
