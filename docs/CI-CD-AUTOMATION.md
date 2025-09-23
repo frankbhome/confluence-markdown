@@ -30,8 +30,17 @@ When you create a GitHub release, the system automatically:
 2. Add a new trusted publisher:
    - **Owner**: `frankbhome`
    - **Repository**: `confluence-markdown`
-   - **Workflow filename**: `publish-pypi.yml`
+   - **Workflow filename**: `.github/workflows/publish-pypi.yml` (full path required)
    - **Environment**: (leave blank)
+
+**Important**: The workflow must have proper permissions for OIDC and publishing:
+
+```yaml
+permissions:
+  id-token: write    # Required for OIDC token request
+  contents: read     # Required to read repository contents
+  # packages: write  # Only needed if publishing to GitHub Packages
+```
 
 ### Publishing a Release
 
