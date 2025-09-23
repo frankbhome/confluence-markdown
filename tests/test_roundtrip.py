@@ -204,7 +204,8 @@ Final paragraph."""
         # Should preserve content
         assert "Main Title" in result
         assert "inline code" in result
-        assert "example.com" in result
+        # Check for the complete URL to avoid substring security issues
+        assert "http://example.com" in result or 'href="http://example.com"' in result
 
     def test_special_characters_round_trip(self, mock_publisher: ConfluencePublisher) -> None:
         """Test that special characters are handled correctly."""
