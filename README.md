@@ -106,6 +106,35 @@ All participants are expected to follow our [Code of Conduct](CODE_OF_CONDUCT.md
 
 ---
 
+## 🤖 CI/CD Automation
+
+The project includes comprehensive CI/CD automation:
+
+### Automated PyPI Publishing
+
+- **Trusted Publishing**: Secure, token-free publishing to PyPI
+- **Automatic Releases**: Packages are published when GitHub releases are created
+- **Version Validation**: Ensures consistency between Git tags and Poetry versions
+- **Quality Gates**: Full test suite runs before publication
+
+### Dependency Management
+
+- **Dependabot**: Weekly automated dependency updates every Monday
+- **Smart Scheduling**: Updates are grouped and labeled for easy review
+- **Security**: Keeps dependencies current to address vulnerabilities
+
+### Release Process
+
+```bash
+# Create and publish a new release
+make release-patch  # or release-minor/release-major
+make release-push   # Push to trigger automated workflows
+```
+
+For detailed information, see [RELEASING.md](RELEASING.md).
+
+---
+
 ## 📜 License
 
 This project is licensed under the [Apache License 2.0](LICENSE).

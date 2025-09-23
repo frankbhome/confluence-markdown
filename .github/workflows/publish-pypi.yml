@@ -1,0 +1,89 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., v1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  publish-pypi:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # For trusted publishing
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Verify version consistency
+        run: |
+          POETRY_VERSION=$(poetry version --short)
+          echo "Poetry version: $POETRY_VERSION"
+
+          # Extract version from git tag or workflow input
+          if [ "${{ github.event_name }}" = "release" ]; then
+            GIT_VERSION="${{ github.event.release.tag_name }}"
+          else
+            GIT_VERSION="${{ github.event.inputs.version }}"
+          fi
+
+          # Remove 'v' prefix from git tag
+          GIT_VERSION_CLEAN="${GIT_VERSION#v}"
+          echo "Git version: $GIT_VERSION_CLEAN"
+
+          # Verify versions match
+          if [ "$POETRY_VERSION" != "$GIT_VERSION_CLEAN" ]; then
+            echo "❌ Version mismatch: Poetry ($POETRY_VERSION) != Git ($GIT_VERSION_CLEAN)"
+            exit 1
+          fi
+          echo "✅ Version consistency verified: $POETRY_VERSION"
+
+      - name: Run tests before publishing
+        run: |
+          poetry install
+          poetry run pytest --cov=src --cov=scripts --cov-fail-under=80
+
+      - name: Build package
+        run: poetry build
+
+      - name: Verify build artifacts
+        run: |
+          ls -la dist/
+          # Check that both wheel and sdist were created
+          if ! compgen -G 'dist/*.whl' > /dev/null || ! compgen -G 'dist/*.tar.gz' > /dev/null; then
+            echo "❌ Missing build artifacts"
+            exit 1
+          fi
+          echo "✅ Build artifacts verified"
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          print-hash: true
+        # Uses OpenID Connect trusted publishing - no API tokens needed
+        # Configure at: https://pypi.org/manage/account/publishing/
+
+      - name: Verify PyPI publication
+        run: |
+          PACKAGE_NAME=$(poetry run python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['tool']['poetry']['name'])")
+          PACKAGE_VERSION=$(poetry version --short)
+          echo "⏳ Waiting for package to appear on PyPI..."
+          sleep 30
+
+          # Verify package is available on PyPI using the JSON API
+          if curl -s "https://pypi.org/pypi/$PACKAGE_NAME/json" | jq -e --arg v "$PACKAGE_VERSION" '.releases[$v]' > /dev/null; then
+            echo "✅ Package $PACKAGE_NAME==$PACKAGE_VERSION successfully published to PyPI"
+          else
+            echo "⚠️ Package not yet visible on PyPI (may take a few minutes)"
+          fi
