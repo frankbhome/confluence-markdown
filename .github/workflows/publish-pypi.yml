@@ -61,7 +61,7 @@ jobs:
         run: |
           ls -la dist/
           # Check that both wheel and sdist were created
-          if ! ls dist/*.whl 1> /dev/null 2>&1 || ! ls dist/*.tar.gz 1> /dev/null 2>&1; then
+          if ! compgen -G 'dist/*.whl' > /dev/null || ! compgen -G 'dist/*.tar.gz' > /dev/null; then
             echo "❌ Missing build artifacts"
             exit 1
           fi
