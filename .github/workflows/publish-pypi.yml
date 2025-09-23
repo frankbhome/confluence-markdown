@@ -80,8 +80,8 @@ jobs:
           echo "⏳ Waiting for package to appear on PyPI..."
           sleep 30
 
-          # Verify package is available on PyPI
-          if pip index versions confluence-markdown | grep -q "$PACKAGE_VERSION"; then
+          # Verify package is available on PyPI using the JSON API
+          if curl -s https://pypi.org/pypi/confluence-markdown/json | jq -e --arg v "$PACKAGE_VERSION" '.releases[$v]' > /dev/null; then
             echo "✅ Package confluence-markdown==$PACKAGE_VERSION successfully published to PyPI"
           else
             echo "⚠️ Package not yet visible on PyPI (may take a few minutes)"
