@@ -1,0 +1,64 @@
+Apache License 2.0 Project
+Copyright (c) 2025 Francis Bain
+
+This product includes software developed by Francis Bain.
+
+This software contains the following third-party components:
+
+===============================================================================
+
+requests
+Copyright 2019 Kenneth Reitz
+Licensed under the Apache License, Version 2.0
+https://github.com/psf/requests
+
+===============================================================================
+
+python-decouple
+Copyright 2013 Henrique Bastos
+Licensed under the MIT License
+https://github.com/HBNetwork/python-decouple
+
+===============================================================================
+
+Development Dependencies (not included in distribution):
+
+ruff
+Copyright 2022-2023 Charlie Marsh
+Licensed under the MIT License
+https://github.com/astral-sh/ruff
+
+mypy
+Copyright 2012-2023 Jukka Lehtosalo and contributors
+Licensed under the MIT License
+https://github.com/python/mypy
+
+pytest
+Copyright 2004-2023 Holger Krekel and contributors
+Licensed under the MIT License
+https://github.com/pytest-dev/pytest
+
+pytest-cov
+Copyright 2010-2023 Ned Batchelder and contributors
+Licensed under the Apache License, Version 2.0
+https://github.com/pytest-dev/pytest-cov
+
+pre-commit
+Copyright 2014-2023 Anthony Sottile
+Licensed under the MIT License
+https://github.com/pre-commit/pre-commit
+
+commitizen
+Copyright 2018-2023 Santiago Fraire
+Licensed under the MIT License
+https://github.com/commitizen-tools/commitizen
+
+yamllint
+Copyright 2016-2023 Adrien Vergé
+Licensed under the GNU General Public License v3.0
+https://github.com/adrienverge/yamllint
+
+build
+Copyright 2019-2023 The Python Packaging Authority
+Licensed under the MIT License
+https://github.com/pypa/build

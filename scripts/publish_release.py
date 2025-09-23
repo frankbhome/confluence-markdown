@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (c) 2025 Francis Bain
+# SPDX-License-Identifier: Apache-2.0
+
 """Confluence Release Notes Publisher.
 
 This script automatically publishes release notes to Confluence
