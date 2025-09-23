@@ -18,10 +18,6 @@ updates:
     allow:
       - dependency-type: "direct"
       - dependency-type: "indirect"
-    ignore:
-      # Ignore patch updates for stable dependencies
-      - dependency-name: "python"
-        update-types: ["version-update:semver-patch"]
 
   # GitHub Actions dependencies
   - package-ecosystem: "github-actions"
