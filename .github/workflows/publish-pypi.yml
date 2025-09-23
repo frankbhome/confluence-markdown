@@ -76,13 +76,14 @@ jobs:
 
       - name: Verify PyPI publication
         run: |
+          PACKAGE_NAME=$(poetry run python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['tool']['poetry']['name'])")
           PACKAGE_VERSION=$(poetry version --short)
           echo "⏳ Waiting for package to appear on PyPI..."
           sleep 30
 
           # Verify package is available on PyPI using the JSON API
-          if curl -s https://pypi.org/pypi/confluence-markdown/json | jq -e --arg v "$PACKAGE_VERSION" '.releases[$v]' > /dev/null; then
-            echo "✅ Package confluence-markdown==$PACKAGE_VERSION successfully published to PyPI"
+          if curl -s "https://pypi.org/pypi/$PACKAGE_NAME/json" | jq -e --arg v "$PACKAGE_VERSION" '.releases[$v]' > /dev/null; then
+            echo "✅ Package $PACKAGE_NAME==$PACKAGE_VERSION successfully published to PyPI"
           else
             echo "⚠️ Package not yet visible on PyPI (may take a few minutes)"
           fi
