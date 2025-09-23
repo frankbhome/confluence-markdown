@@ -19,7 +19,7 @@ conmd = "confluence_markdown.__main__:main"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.13.1"
-mypy = "^1.18.1"
+mypy = "^1.18.2"
 pytest = "^8.4.2"
 pytest-cov = "^7.0.0"
 pre-commit = "^4.3.0"
