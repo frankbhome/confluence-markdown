@@ -5,6 +5,7 @@ This document explains how to use the automated CI/CD features implemented in CM
 ## Overview
 
 The project now includes comprehensive automation for:
+
 - **Automated PyPI Publishing**: Secure, token-free package publishing
 - **Dependency Management**: Weekly automated dependency updates
 - **Release Process**: Streamlined version management and publishing
@@ -90,33 +91,34 @@ poetry update
 poetry update package-name
 ```
 
-### Configuring Dependabot
+## Repository Security
 
-Edit `.github/dependabot.yml` to:
-- Change update schedule
-- Ignore specific dependencies
-- Adjust PR limits
+### Setting Up Branch Protection
 
-Example - ignore major updates for a package:
+To ensure only you can push to main and create releases:
 
-```yaml
-ignore:
-  - dependency-name: "risky-package"
-    update-types: ["version-update:semver-major"]
-```
+1. **Branch Protection Rules**:
+   - Go to Settings → Branches
+   - Add rule for `main` branch
+   - Require pull request reviews (1 required)
+   - Require status checks to pass
+   - Restrict pushes to administrators
 
-## Security Features
+2. **Tag Protection via Repository Rules** (New Method):
+   - Go to Settings → Rules → Rulesets
+   - Create new tag ruleset for `v*.*.*`
+   - Restrict creations, updates, and deletions
+   - Allow only repository administrators
 
-### Trusted Publishing Benefits
-- **No API tokens** - Eliminates token management and security risks
-- **Automatic rotation** - GitHub provides fresh tokens for each run
-- **Audit trail** - All publications are linked to specific commits/releases
-- **Reduced attack surface** - No long-lived credentials to compromise
+### Security Features
 
-### Dependency Security
-- **Regular updates** - Weekly updates catch security vulnerabilities quickly
-- **Automated testing** - Every dependency update runs the full test suite
-- **Controlled rollout** - Updates come as reviewable PRs, not automatic merges
+Enable these in Settings → Security & analysis:
+
+- ✅ **Dependency graph**
+- ✅ **Dependabot alerts**
+- ✅ **Dependabot security updates**
+- ✅ **Secret scanning**
+- ✅ **Push protection**
 
 ## Troubleshooting
 
@@ -133,27 +135,24 @@ ignore:
 2. **Test failures**: Review and fix failing dependency updates
 3. **Too many PRs**: Adjust `open-pull-requests-limit` in config
 
-### Release Process Issues
-
-1. **Dirty working tree**: Commit or stash changes before releasing
-2. **Not on main**: Switch to main branch before releasing
-3. **Behind origin**: Pull latest changes before releasing
-
 ## Best Practices
 
 ### Release Management
+
 - Always test releases in a staging environment first
 - Use semantic versioning consistently
 - Write clear release notes
 - Monitor PyPI publication after releases
 
 ### Dependency Management
+
 - Review dependency update PRs promptly
 - Test applications after major dependency updates
 - Keep an eye on security advisories for your dependencies
 - Use `poetry.lock` to ensure reproducible builds
 
 ### Security
+
 - Regularly audit your trusted publisher settings
 - Monitor PyPI download statistics for anomalies
 - Keep GitHub Actions workflows updated
@@ -162,16 +161,24 @@ ignore:
 ## Monitoring
 
 ### GitHub Actions
+
+Monitor these workflows:
+
 - **Release workflow**: Monitors tag creation and GitHub release publication
 - **PyPI workflow**: Monitors package publishing and verification
 - **CI workflow**: Monitors code quality on all branches
 
 ### PyPI
-- Check [PyPI project page](https://pypi.org/project/confluence-markdown/) for:
-  - Download statistics
-  - Version history
-  - Security advisories
+
+Check [PyPI project page](https://pypi.org/project/confluence-markdown/) for:
+
+- Download statistics
+- Version history
+- Security advisories
 
 ### Dependabot
+
+Monitor dependency updates:
+
 - Review dependency update PRs in the **Pull Requests** tab
 - Check Dependabot logs in **Insights** → **Dependency graph** → **Dependabot**
