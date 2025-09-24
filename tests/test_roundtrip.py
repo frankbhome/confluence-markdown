@@ -228,7 +228,10 @@ Final paragraph."""
         # Extract all URLs from result (basic heuristic for http links)
         urls = re.findall(r'(https?://[^\s"\'>]+)', result)
         hosts = [urlparse(url).hostname for url in urls]
-        assert "example.com" in hosts, f"No URL with hostname 'example.com' found in result: {urls}"
+        # Use exact hostname matching to prevent subdomain attacks
+        assert any(
+            host == "example.com" for host in hosts
+        ), f"No URL with exact hostname 'example.com' found in result: {urls}"
 
     def test_special_characters_round_trip(self, mock_publisher: ConfluencePublisher) -> None:
         """Test that special characters are handled correctly."""
