@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Francis Bain
+# SPDX-License-Identifier: Apache-2.0
+
 """Main entry point for the confluence-markdown package.
 
 This module provides the main function that serves as the entry point

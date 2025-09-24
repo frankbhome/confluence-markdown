@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Francis Bain
+# SPDX-License-Identifier: Apache-2.0
+
 """Smoke tests for the confluence-markdown package.
 
 This module contains smoke tests to verify that the package
@@ -7,6 +10,7 @@ is properly installed and core functionality works correctly.
 import os
 import subprocess
 import sys
+from io import StringIO
 from unittest.mock import patch
 
 
@@ -18,6 +22,41 @@ def test_smoke():
     is intact.
     """
     assert True
+
+
+def test_main_function_direct_call():
+    """Test that the main function can be called directly and produces expected output."""
+    from confluence_markdown.__main__ import main
+
+    # Capture stdout to verify the output
+    with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+        main()
+        output = mock_stdout.getvalue()
+
+    assert "confluence-markdown OK" in output
+
+
+def test_main_module_if_name_main():
+    """Test the if __name__ == '__main__' execution path."""
+    import runpy
+    import sys
+    from io import StringIO
+    from unittest.mock import patch
+
+    # Capture stdout to verify the output
+    with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+        # Mock sys.argv to simulate command line execution
+        with patch.object(sys, "argv", ["confluence_markdown.__main__"]):
+            try:
+                # Use runpy to execute the module as if it was run with python -m
+                runpy.run_module("confluence_markdown.__main__", run_name="__main__")
+            except SystemExit:
+                # runpy might call sys.exit, which is normal for CLI tools
+                pass
+
+        output = mock_stdout.getvalue()
+
+    assert "confluence-markdown OK" in output
 
 
 def test_package_main_entry_point():
