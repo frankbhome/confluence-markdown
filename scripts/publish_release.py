@@ -8,10 +8,12 @@ This script automatically publishes release notes to Confluence
 when a new GitHub release is created.
 """
 
+import html
 import json
 import re
 import sys
 from typing import TYPE_CHECKING, Any, Optional
+from urllib.parse import urlparse
 
 import requests
 from decouple import config  # type: ignore
@@ -167,8 +169,6 @@ pip install confluence-markdown=={version.lstrip("v")}
         Returns:
             str: Converted string in Confluence storage format.
         """
-        import html
-
         # Store code blocks temporarily to protect them during processing
         code_blocks: list[str] = []
 
@@ -217,8 +217,49 @@ pip install confluence-markdown=={version.lstrip("v")}
         # Convert italic
         markdown = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", markdown)
 
-        # Convert links
-        markdown = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2">\1</a>', markdown)
+        # Convert links with security filtering
+        def secure_link_replacement(match: re.Match[str]) -> str:
+            """
+            Securely process markdown links, filtering out dangerous schemes.
+
+            Args:
+                match: Regex match object with groups (link_text, url)
+
+            Returns:
+                str: Safe HTML link or plain text if URL scheme is dangerous
+            """
+            link_text = match.group(1)
+            url = match.group(2).strip()
+
+            # Parse the URL to extract the scheme
+            try:
+                parsed = urlparse(url)
+                scheme = parsed.scheme.lower() if parsed.scheme else ""
+            except Exception:
+                # If URL parsing fails, treat as plain text
+                return html.escape(link_text)
+
+            # Define allowed schemes (case-insensitive)
+            allowed_schemes = {"http", "https", "mailto"}
+
+            # Allow local paths (no scheme, starts with /, or starts with #)
+            if not scheme or url.startswith("/") or url.startswith("#"):
+                # Local path - escape the URL and create link
+                escaped_url = html.escape(url, quote=True)
+                escaped_text = html.escape(link_text)
+                return f'<a href="{escaped_url}">{escaped_text}</a>'
+
+            # Check if scheme is allowed
+            if scheme in allowed_schemes:
+                # Safe scheme - escape and create link
+                escaped_url = html.escape(url, quote=True)
+                escaped_text = html.escape(link_text)
+                return f'<a href="{escaped_url}">{escaped_text}</a>'
+            else:
+                # Dangerous scheme - return only the link text (safely escaped)
+                return html.escape(link_text)
+
+        markdown = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", secure_link_replacement, markdown)
 
         # Convert paragraphs (but skip lines that are already HTML or empty)
         lines = markdown.split("\n")

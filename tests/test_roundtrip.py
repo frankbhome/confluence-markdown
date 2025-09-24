@@ -137,7 +137,6 @@ class TestRoundTripConversion:
             assert expected_pattern in result
             assert "<a " in result and "</a>" in result
 
-    @pytest.mark.xfail(reason="Dangerous link schemes should be filtered out - not yet implemented")
     def test_dangerous_links_are_filtered(self, mock_publisher: ConfluencePublisher) -> None:
         """Test that links with dangerous schemes are filtered out."""
         dangerous_cases = [
@@ -154,6 +153,23 @@ class TestRoundTripConversion:
                 assert "XSS" in result  # Link text should be preserved
             elif markdown.startswith("[Data URL]"):
                 assert "Data URL" in result  # Link text should be preserved
+
+    def test_safe_links_are_preserved(self, mock_publisher: ConfluencePublisher) -> None:
+        """Test that links with safe schemes are preserved."""
+        safe_cases = [
+            ("[HTTPS Link](https://example.com)", 'href="https://example.com"'),
+            ("[HTTP Link](http://example.com)", 'href="http://example.com"'),
+            ("[Email](mailto:test@example.com)", 'href="mailto:test@example.com"'),
+            ("[Local Path](/docs/page)", 'href="/docs/page"'),
+            ("[Anchor](#section)", 'href="#section"'),
+            ("[Relative Path](../other)", 'href="../other"'),
+        ]
+
+        for markdown, expected_href in safe_cases:
+            result = mock_publisher._convert_markdown_to_confluence(markdown)
+            # Should produce href attributes for safe schemes
+            assert expected_href in result
+            assert "<a " in result and "</a>" in result
 
     def test_code_blocks_round_trip(self, mock_publisher: ConfluencePublisher) -> None:
         """Test that code blocks convert properly."""
