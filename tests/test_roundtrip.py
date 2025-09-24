@@ -7,8 +7,10 @@ This module contains tests that verify bidirectional conversion between
 Markdown and Confluence formats maintains content integrity.
 """
 
+import re
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 
@@ -204,8 +206,11 @@ Final paragraph."""
         # Should preserve content
         assert "Main Title" in result
         assert "inline code" in result
-        # Check for the complete URL to avoid substring security issues
-        assert "http://example.com" in result or 'href="http://example.com"' in result
+        # Check for the presence of a URL with the correct hostname (example.com)
+        # Extract all URLs from result (basic heuristic for http links)
+        urls = re.findall(r'(https?://[^\s"\'>]+)', result)
+        hosts = [urlparse(url).hostname for url in urls]
+        assert "example.com" in hosts, f"No URL with hostname 'example.com' found in result: {urls}"
 
     def test_special_characters_round_trip(self, mock_publisher: ConfluencePublisher) -> None:
         """Test that special characters are handled correctly."""
