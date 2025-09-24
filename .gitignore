@@ -180,7 +180,3 @@ __marimo__/
 # IDEs and editors
 .vscode/
 .idea/
-
-# Temporary PR description files
-PR_DESCRIPTION.md
-UPDATED_PR_DESCRIPTION.md
