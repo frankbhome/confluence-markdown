@@ -41,6 +41,7 @@ poetry run python -m confluence_markdown
 1. **Install Poetry**: [Poetry Installation Guide](https://python-poetry.org/docs/#installation)
 
 2. **Clone and Install**:
+
    ```bash
    git clone https://github.com/frankbhome/confluence-markdown.git
    cd confluence-markdown
@@ -48,11 +49,13 @@ poetry run python -m confluence_markdown
    ```
 
 3. **Configure Pre-commit**:
+
    ```bash
    poetry run pre-commit install --hook-type pre-commit --hook-type commit-msg
    ```
 
 4. **Verify Setup**:
+
    ```bash
    poetry run pytest
    poetry run python -m confluence_markdown
@@ -167,6 +170,7 @@ def example_function(param: str) -> bool:
 #### README Updates
 
 Keep `README.md` current with:
+
 - Installation instructions
 - Basic usage examples
 - Feature overview
@@ -191,6 +195,7 @@ poetry run cz bump --increment MAJOR  # 1.0.0 -> 2.0.0
 ### Release Workflow
 
 1. **Prepare Release**:
+
    ```bash
    git checkout main
    git pull origin main
@@ -221,7 +226,7 @@ export CONFLUENCE_TOKEN="your-api-token"
 export CONFLUENCE_SPACE="SPACE_KEY"
 
 # Optional
-export CONFLUENCE_PARENT_PAGE_TITLE="Parent Page Name"
+export CONFLUENCE_PARENT_PAGE="Parent Page Name"
 ```
 
 ### Poetry Configuration
@@ -263,6 +268,7 @@ poetry run mypy src/
 ### Common Issues
 
 #### **Poetry Issues**
+
 ```bash
 # Clear cache and reinstall
 poetry cache clear pypi --all
@@ -270,6 +276,7 @@ poetry install --sync
 ```
 
 #### **Pre-commit Issues**
+
 ```bash
 # Reinstall hooks
 poetry run pre-commit clean
@@ -277,12 +284,14 @@ poetry run pre-commit install --hook-type pre-commit --hook-type commit-msg
 ```
 
 #### **Test Failures**
+
 ```bash
 # Verbose output for debugging
 poetry run pytest -vvv --tb=long
 ```
 
 #### **Import Errors**
+
 ```bash
 # Check PYTHONPATH and package installation
 poetry run python -c "import confluence_markdown; print('OK')"
@@ -312,6 +321,7 @@ poetry run python -c "import confluence_markdown; print('OK')"
 ### Bug Reports
 
 Include in bug reports:
+
 - Python version: `python --version`
 - Package version: `poetry run python -c "import confluence_markdown; print(confluence_markdown.__version__)"`
 - Environment details
@@ -322,7 +332,7 @@ Include in bug reports:
 
 ### Package Structure
 
-```
+```text
 confluence-markdown/
 ├── src/confluence_markdown/     # Main package
 │   ├── __init__.py             # Package initialization

@@ -137,6 +137,24 @@ class TestRoundTripConversion:
             assert expected_pattern in result
             assert "<a " in result and "</a>" in result
 
+    @pytest.mark.xfail(reason="Dangerous link schemes should be filtered out - not yet implemented")
+    def test_dangerous_links_are_filtered(self, mock_publisher: ConfluencePublisher) -> None:
+        """Test that links with dangerous schemes are filtered out."""
+        dangerous_cases = [
+            ("[XSS](javascript:alert('xss'))", "javascript:"),
+            ("[Data URL](data:text/html,<script>alert('xss')</script>)", "data:"),
+        ]
+
+        for markdown, dangerous_scheme in dangerous_cases:
+            result = mock_publisher._convert_markdown_to_confluence(markdown)
+            # Should not produce href attributes with dangerous schemes
+            assert dangerous_scheme not in result
+            # Should still preserve the link text safely
+            if markdown.startswith("[XSS]"):
+                assert "XSS" in result  # Link text should be preserved
+            elif markdown.startswith("[Data URL]"):
+                assert "Data URL" in result  # Link text should be preserved
+
     def test_code_blocks_round_trip(self, mock_publisher: ConfluencePublisher) -> None:
         """Test that code blocks convert properly."""
         # Test fenced code block
