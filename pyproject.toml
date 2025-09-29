@@ -30,7 +30,7 @@ hypothesis = "^6.140.2"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.1.2"
+version = "0.3.0"
 tag_format = "v$version"
 version_scheme = "semver"
 update_changelog_on_bump = true
