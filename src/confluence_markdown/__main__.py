@@ -1,20 +1,16 @@
 # Copyright (c) 2025 Francis Bain
 # SPDX-License-Identifier: Apache-2.0
 
-"""Main entry point for the confluence-markdown package.
+"""Main entry point for the confluence-markdown tool."""
 
-This module provides the main function that serves as the entry point
-when the package is executed as a module.
-"""
+import sys
+
+from .cli import main as cli_main
 
 
-def main():
-    """Print a simple status message to verify the package is working.
-
-    This function serves as a basic smoke test to ensure the package
-    can be imported and executed correctly.
-    """
-    print("confluence-markdown OK")
+def main() -> None:
+    """Main entry point for the confluence-markdown tool."""
+    sys.exit(cli_main())
 
 
 if __name__ == "__main__":
