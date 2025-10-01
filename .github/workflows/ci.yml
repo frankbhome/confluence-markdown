@@ -88,5 +88,8 @@ jobs:
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
 
+      - name: Conversion Fidelity Check (CMD-44)
+        run: poetry run pytest tests/test_conversion_fidelity.py -v
+
       - name: CLI Smoke Test
         run: poetry run conmd
