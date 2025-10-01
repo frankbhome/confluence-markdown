@@ -231,6 +231,38 @@ This tests multiple elements together."""
             average_fidelity >= 95.0
         ), f"Overall corpus fidelity is {average_fidelity:.1f}%, below required 95% threshold"
 
+    def test_edge_cases_for_coverage(self) -> None:
+        """Test edge cases to achieve 100% converter coverage."""
+        from unittest.mock import patch
+
+        # Test 1: Force URL parsing exception
+        markdown = "[test link](https://example.com)"
+        with patch("confluence_markdown.converter.urlparse") as mock_urlparse:
+            mock_urlparse.side_effect = Exception("Simulated URL parsing error")
+            result = self.converter.convert(markdown)
+            # Should handle the exception and return escaped text
+            assert "test link" in result
+            assert "<a href=" not in result
+
+        # Test 2: Local path URLs (no scheme, starts with /, or starts with #)
+        test_cases = [
+            ("[local](/file)", "/file"),
+            ("[anchor](#section)", "#section"),
+            ("[relative](file.html)", "file.html"),
+        ]
+        for markdown, expected_url in test_cases:
+            result = self.converter.convert(markdown)
+            assert f'href="{expected_url}"' in result
+
+        # Test 3: Dangerous URL schemes
+        dangerous_schemes = ["javascript:", "data:", "vbscript:", "file:", "ftp:"]
+        for scheme in dangerous_schemes:
+            markdown = f"[dangerous]({scheme}alert('xss'))"
+            result = self.converter.convert(markdown)
+            # Should return only the link text, not create a link
+            assert "dangerous" in result
+            assert f'href="{scheme}' not in result
+
 
 if __name__ == "__main__":
     # Quick validation
