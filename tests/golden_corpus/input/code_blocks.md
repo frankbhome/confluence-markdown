@@ -10,7 +10,7 @@ def hello_world():
 
 ## Fenced Code Block without Language
 
-```
+```text
 This is a plain code block
 without any language specified.
 ```
