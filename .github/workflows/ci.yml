@@ -89,7 +89,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Conversion Fidelity Check (CMD-44)
-        run: poetry run python check_fidelity.py
+        run: poetry run pytest tests/test_conversion_fidelity.py -v
 
       - name: CLI Smoke Test
         run: poetry run conmd

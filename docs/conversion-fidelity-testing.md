@@ -28,7 +28,7 @@ continuous monitoring.
 
 ### ✅ CI Pipeline Integration
 **Location:** `.github/workflows/ci.yml`
-- Added conversion fidelity check step: `poetry run python check_fidelity.py`
+- Added conversion fidelity check step: `poetry run pytest tests/test_conversion_fidelity.py -v`
 - Fails build if fidelity <95% for corpus
 - Runs on all Python versions (3.9-3.12)
 
@@ -93,8 +93,9 @@ tests/
 # Run all conversion fidelity tests
 poetry run pytest tests/test_conversion_fidelity.py -v
 
-# Quick fidelity report
-poetry run python check_fidelity.py
+# Run specific fidelity test
+poetry run pytest \
+  tests/test_conversion_fidelity.py::TestConversionFidelity::test_overall_corpus_fidelity -v
 
 # Generate updated expected outputs
 poetry run python generate_expected.py
