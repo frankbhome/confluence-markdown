@@ -575,10 +575,13 @@ class ConfluenceClient:
             raise
 
     def add_labels(self, page_id: str, labels: Iterable[str]) -> None:
-        items = [{"prefix": "global", "name": label} for label in labels]
+        """Add labels to a page."""
+        label_objects: list[dict[str, str]] = [
+            {"prefix": "global", "name": label} for label in labels
+        ]
         resp = self.session.post(
             self._url(f"/rest/api/content/{page_id}/label"),
-            data=json.dumps(items),
+            data=json.dumps(label_objects),
             timeout=self.timeout,
         )
         if not resp.ok:
