@@ -1,0 +1,72 @@
+# CodeCov Configuration for confluence-markdown
+# https://docs.codecov.com/docs/codecov-yaml
+
+coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+
+  status:
+    project:
+      default:
+        # Overall project coverage target - set based on current 99% achievement
+        target: 98%
+        threshold: 1%
+        base: auto
+
+    patch:
+      default:
+        # Coverage for new/changed code (diff coverage) - adjusted for realistic expectations
+        target: 95%
+        threshold: 3%
+        base: auto
+        # Allow some tolerance for defensive programming patterns
+
+      converter:
+        # Specific target for converter.py which has 3 unreachable defensive branches
+        target: 97%
+        threshold: 1%
+        paths:
+          - "src/confluence_markdown/converter.py"
+
+  ignore:
+    - "scripts/"
+    - "tests/"
+    - "**/__pycache__/**"
+    - "**/.pytest_cache/**"
+    - "**/htmlcov/**"
+
+# Flags for different test types
+flags:
+  unittests:
+    paths:
+      - "src/"
+
+# Comment behavior
+comment:
+  layout: "header, diff, flags, files"
+  behavior: default
+  require_changes: true
+  require_base: false
+  require_head: true
+
+# Parsers
+parsers:
+  gcov:
+    branch_detection:
+      conditional: true
+      loop: true
+      macro: false
+      method: false
+
+# Ignore specific files or patterns
+ignore:
+  - "scripts/publish_release.py"  # Release tooling
+  - "**/*_test.py"
+  - "**/test_*.py"
+  - "htmlcov/"
+  - ".coverage"
+
+# Additional configuration for defensive programming tolerance
+github_checks:
+  annotations: true
