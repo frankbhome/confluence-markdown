@@ -24,11 +24,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
 logger = logging.getLogger("confluence_api")
-if not logger.handlers:
-    h = logging.StreamHandler()
-    h.setFormatter(logging.Formatter("%(asctime)s %(levelname)s confluence_api %(message)s"))
-    logger.addHandler(h)
-logger.setLevel(logging.INFO)
+logger.addHandler(logging.NullHandler())
 
 
 @dataclass
@@ -145,6 +141,40 @@ class ConfluenceClient:
             f"Unexpected status {status} during {context}", status=status, payload=payload
         )
 
+    def _resolve_version_and_title(
+        self, page_id: str, expected_version: int | None, title: str | None
+    ) -> tuple[int, str]:
+        """Resolve target version and title for page updates.
+
+        Args:
+            page_id: Confluence page ID
+            expected_version: Expected current version for optimistic locking (if None, fetches current)
+            title: New title (if None or falsy, fetches current title)
+
+        Returns:
+            Tuple of (target_version, resolved_title) where target_version is ready for API call
+        """
+        if expected_version is None:
+            logger.info(
+                "Fetching current page version for optimistic locking",
+                extra={"operation": "update_page", "page_id": page_id},
+            )
+            current = self.get_page_by_id(page_id, expand=("version",))
+            target_version = current.version.number + 1
+            resolved_title = title or current.title
+        else:
+            target_version = expected_version + 1  # Confluence expects next version
+            if not title:
+                logger.info(
+                    "Fetching current page title",
+                    extra={"operation": "update_page", "page_id": page_id},
+                )
+                resolved_title = self.get_page_by_id(page_id).title
+            else:
+                resolved_title = title
+
+        return target_version, resolved_title
+
     def get_page_by_id(self, page_id: str, *, expand: tuple[str, ...] = ("version",)) -> Page:
         """Get page by ID with comprehensive logging.
 
@@ -220,12 +250,95 @@ class ConfluenceClient:
     def get_page_by_title(
         self, *, space_key: str, title: str, expand: tuple[str, ...] = ("version",)
     ) -> Page | None:
+        """Get page by title with comprehensive logging.
+
+        Args:
+            space_key: Confluence space key
+            title: Page title to search for
+            expand: Additional properties to expand (version, body.storage, etc.)
+
+        Returns:
+            Page object if found, None if not found
+
+        Raises:
+            AuthError: If authentication fails
+            ConfluenceAPIError: For other API errors
+        """
+        start_time = time.time()
         params = {"title": title, "spaceKey": space_key, "expand": ",".join(expand), "limit": 1}
-        resp = self.session.get(self._url("/rest/api/content"), params=params, timeout=self.timeout)
-        if not resp.ok:
-            self._handle_error(resp, f"get_page_by_title(space={space_key}, title={title})")
-        results = resp.json().get("results", [])
-        return self._page_from_json(results[0]) if results else None
+
+        logger.info(
+            "Getting page by title",
+            extra={
+                "space_key": space_key,
+                "title": title,
+                "expand": list(expand),
+                "operation": "get_page_by_title",
+            },
+        )
+
+        try:
+            resp = self.session.get(
+                self._url("/rest/api/content"), params=params, timeout=self.timeout
+            )
+            duration = time.time() - start_time
+
+            logger.info(
+                "API call completed",
+                extra={
+                    "operation": "get_page_by_title",
+                    "space_key": space_key,
+                    "title": title,
+                    "status_code": resp.status_code,
+                    "duration_ms": round(duration * 1000, 2),
+                    "success": resp.ok,
+                },
+            )
+
+            if not resp.ok:
+                self._handle_error(resp, f"get_page_by_title(space={space_key}, title={title})")
+
+            results = resp.json().get("results", [])
+
+            if results:
+                page = self._page_from_json(results[0])
+                logger.info(
+                    "Page found",
+                    extra={
+                        "operation": "get_page_by_title",
+                        "space_key": space_key,
+                        "title": title,
+                        "page_id": page.id,
+                        "page_title": page.title,
+                        "version": page.version.number,
+                    },
+                )
+                return page
+            else:
+                logger.info(
+                    "Page not found",
+                    extra={
+                        "operation": "get_page_by_title",
+                        "space_key": space_key,
+                        "title": title,
+                    },
+                )
+                return None
+
+        except Exception as e:
+            duration = time.time() - start_time
+            logger.error(
+                "API call failed",
+                extra={
+                    "operation": "get_page_by_title",
+                    "space_key": space_key,
+                    "title": title,
+                    "duration_ms": round(duration * 1000, 2),
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                },
+            )
+            raise
 
     def create_page(
         self,
@@ -386,22 +499,9 @@ class ConfluenceClient:
 
         try:
             # Handle version control and title resolution
-            if expected_version is None:
-                logger.info(
-                    "Fetching current page version for optimistic locking",
-                    extra={"operation": "update_page", "page_id": page_id},
-                )
-                current = self.get_page_by_id(page_id, expand=("version",))
-                expected_version = current.version.number + 1
-                title = title or current.title
-            else:
-                expected_version = expected_version + 1  # Confluence expects next version
-                if not title:
-                    logger.info(
-                        "Fetching current page title",
-                        extra={"operation": "update_page", "page_id": page_id},
-                    )
-                    title = self.get_page_by_id(page_id).title
+            expected_version, title = self._resolve_version_and_title(
+                page_id, expected_version, title
+            )
 
             logger.info(
                 "Prepared update payload",

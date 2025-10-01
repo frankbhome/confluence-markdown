@@ -321,3 +321,61 @@ class TestConfluenceClient:
         assert page.space_key == ""
         assert page.version.number == 1
         assert page.body_storage is None
+
+    @patch("requests.Session.get")
+    def test_get_page_by_title_logging(self, mock_get):
+        """Test that get_page_by_title includes proper logging like get_page_by_id."""
+        client = ConfluenceClient(base_url="https://example.atlassian.net/wiki", token="test")
+
+        # Test when page is found
+        mock_response = MockResponse(
+            200,
+            {
+                "results": [
+                    {
+                        "id": "789012",
+                        "title": "Found Page",
+                        "space": {"key": "TEST"},
+                        "version": {"number": 3},
+                    }
+                ]
+            },
+        )
+        mock_get.return_value = mock_response
+
+        with patch("confluence_markdown.confluence_api.logger") as mock_logger:
+            result = client.get_page_by_title(space_key="TEST", title="Found Page")
+
+        # Verify page was found
+        assert result is not None
+        assert result.id == "789012"
+        assert result.title == "Found Page"
+
+        # Verify comprehensive logging was called
+        mock_logger.info.assert_called()
+        call_args_list = mock_logger.info.call_args_list
+        assert (
+            len(call_args_list) >= 3
+        )  # Should have operation start, API completion, and result logs
+
+    @patch("requests.Session.get")
+    def test_get_page_by_title_not_found_logging(self, mock_get):
+        """Test that get_page_by_title logs when page is not found."""
+        client = ConfluenceClient(base_url="https://example.atlassian.net/wiki", token="test")
+
+        # Test when page is not found
+        mock_response = MockResponse(200, {"results": []})
+        mock_get.return_value = mock_response
+
+        with patch("confluence_markdown.confluence_api.logger") as mock_logger:
+            result = client.get_page_by_title(space_key="TEST", title="Missing Page")
+
+        # Verify no page was found
+        assert result is None
+
+        # Verify logging was called including "not found" message
+        mock_logger.info.assert_called()
+        call_args_list = mock_logger.info.call_args_list
+        assert (
+            len(call_args_list) >= 3
+        )  # Should have operation start, API completion, and not found logs
