@@ -5,9 +5,7 @@ description = "Two-way sync between Confluence and Markdown (Git)."
 authors = ["Francis Bain"]
 license = "Apache-2.0"
 readme = "README.md"
-packages = [
-  { include = "confluence_markdown", from = "src" }
-]
+packages = [{ include = "confluence_markdown", from = "src" }]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4.0"
@@ -16,6 +14,10 @@ python-decouple = "^3.8"
 
 [tool.poetry.scripts]
 conmd = "confluence_markdown.__main__:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.13.2"
