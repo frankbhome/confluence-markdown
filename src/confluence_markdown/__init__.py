@@ -1,11 +1,23 @@
 # Copyright (c) 2025 Francis Bain
 # SPDX-License-Identifier: Apache-2.0
 
-"""Confluence Markdown package.
+# Makes top-level imports work and documents public API
+from .confluence_api import (
+    AuthError,
+    ConflictError,
+    ConfluenceAPIError,
+    ConfluenceClient,
+    NotFoundError,
+    RateLimitError,
+    ServerError,
+)
 
-A Python package for working with Confluence and Markdown content conversion.
-This package provides utilities for converting between Confluence content
-and Markdown format.
-"""
-
-__all__: list[str] = []
+__all__ = [
+    "ConfluenceClient",
+    "ConfluenceAPIError",
+    "AuthError",
+    "NotFoundError",
+    "ConflictError",
+    "RateLimitError",
+    "ServerError",
+]
