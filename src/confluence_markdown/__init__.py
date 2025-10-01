@@ -11,6 +11,7 @@ from .confluence_api import (
     RateLimitError,
     ServerError,
 )
+from .converter import MarkdownToConfluenceConverter
 
 __all__ = [
     "ConfluenceClient",
@@ -20,4 +21,5 @@ __all__ = [
     "ConflictError",
     "RateLimitError",
     "ServerError",
+    "MarkdownToConfluenceConverter",
 ]

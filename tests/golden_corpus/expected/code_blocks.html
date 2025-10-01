@@ -1,0 +1,24 @@
+<h1>Code Blocks Example</h1>
+
+<h2>Fenced Code Block with Language</h2>
+
+<ac:structured-macro ac:name="code" ac:schema-version="1"><ac:parameter ac:name="language">python</ac:parameter><ac:plain-text-body><![CDATA[def hello_world():
+    print("Hello, World!")
+    return True]]></ac:plain-text-body></ac:structured-macro>
+
+<h2>Fenced Code Block without Language</h2>
+
+<ac:structured-macro ac:name="code" ac:schema-version="1"><ac:parameter ac:name="language">text</ac:parameter><ac:plain-text-body><![CDATA[This is a plain code block
+without any language specified.]]></ac:plain-text-body></ac:structured-macro>
+
+<h2>Inline Code</h2>
+
+<p>Here is some <code>inline code</code> in a sentence.</p>
+
+<h2>Mixed Content</h2>
+
+<p>The function <code>calculate()</code> works like this:</p>
+
+<ac:structured-macro ac:name="code" ac:schema-version="1"><ac:parameter ac:name="language">javascript</ac:parameter><ac:plain-text-body><![CDATA[function calculate(a, b) {
+    return a + b;
+}]]></ac:plain-text-body></ac:structured-macro>
