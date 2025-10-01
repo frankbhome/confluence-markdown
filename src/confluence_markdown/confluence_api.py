@@ -265,7 +265,12 @@ class ConfluenceClient:
             ConfluenceAPIError: For other API errors
         """
         start_time = time.time()
-        params = {"title": title, "spaceKey": space_key, "expand": ",".join(expand), "limit": 1}
+        params: dict[str, str | int] = {
+            "title": title,
+            "spaceKey": space_key,
+            "expand": ",".join(expand),
+            "limit": 1,
+        }
 
         logger.info(
             "Getting page by title",
@@ -381,7 +386,7 @@ class ConfluenceClient:
         )
 
         try:
-            payload = {
+            payload: dict[str, Any] = {
                 "type": "page",
                 "title": title,
                 "space": {"key": space_key},
