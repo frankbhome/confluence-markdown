@@ -263,6 +263,25 @@ This tests multiple elements together."""
             assert "dangerous" in result
             assert f'href="{scheme}' not in result
 
+        # Test 4: Additional edge cases to try to improve coverage
+        # Test mixed content with empty elements
+        markdown_mixed = """
+
+
+
+# Header
+- Item 1
+
+- Item 2
+
+
+
+"""
+        result = self.converter.convert(markdown_mixed)
+        assert "<h1>Header</h1>" in result
+        assert "<li>Item 1</li>" in result
+        assert "<li>Item 2</li>" in result
+
 
 if __name__ == "__main__":
     # Quick validation
