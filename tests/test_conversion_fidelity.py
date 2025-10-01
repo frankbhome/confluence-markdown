@@ -275,17 +275,34 @@ This tests multiple elements together."""
         result = self.converter.convert("\n\n\n")
         assert result == "" or result.strip() == ""
 
-        # Note: The remaining 3 branches (93->96, 108->111, 201->198) represent
-        # defensive programming patterns that are extremely difficult to trigger:
-        # - Lines 93 & 108: if list_items empty (but if pattern matches, items are always collected)
-        # - Line 201: if regex match fails (but blocks are extracted with same regex)
-        # These branches likely represent unreachable defensive code paths.
+        # Final attempt: Test edge cases that might naturally trigger missing branches
 
-        # Test content that exercises code block edge cases
-        # This might help hit line 201 if match (false branch)
-        malformed_code = "```\nno closing\n```incomplete"
-        result = self.converter.convert(malformed_code)
-        assert result  # Should handle malformed code blocks
+        # Test extremely minimal list-like content that might not be processed as lists
+        result = self.converter.convert("-")  # Just a dash
+        assert result
+
+        result = self.converter.convert("1.")  # Just number-dot
+        assert result
+
+        # Test various malformed code-like patterns
+        result = self.converter.convert("``` \n```")  # Empty code block
+        assert result
+
+        result = self.converter.convert("```no-closing")  # Incomplete code block
+        assert result
+
+        # Note: The remaining 3 branches (93->96, 108->111, 201->198) represent
+        # defensive programming patterns in converter.py that are extremely difficult
+        # to trigger through normal API usage:
+        #
+        # Lines 93 & 108: These check if list_items is empty after detecting a list
+        # pattern, but if the pattern is detected, the while loop always collects items.
+        #
+        # Line 201: This checks if a code block matches the restoration regex, but
+        # code blocks are extracted using the same regex pattern.
+        #
+        # These appear to be unreachable defensive code paths that exist for robustness
+        # but cannot be triggered without modifying the converter's internal state.
 
 
 if __name__ == "__main__":
