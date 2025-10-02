@@ -92,6 +92,67 @@ class MappingStore:
         except OSError as e:
             raise RuntimeError(f"Failed to save mappings: {e}") from e
 
+    def _normalize_path(self, path: str) -> str:
+        """Normalize a path to canonical repository-relative form.
+
+        Resolves dot segments, makes paths repository-relative, converts to forward slashes,
+        and strips leading "./" or "/" to ensure consistent path keys.
+
+        Args:
+            path: The path to normalize
+
+        Returns:
+            Canonical repository-relative path string
+        """
+        try:
+            # Convert to Path object and resolve dot segments
+            path_obj = Path(path)
+
+            # Try to resolve the path (may not exist yet)
+            try:
+                resolved_path = path_obj.resolve()
+            except (OSError, RuntimeError):
+                # If resolve fails, use resolve(strict=False) for Python 3.10+
+                # or manually normalize for older versions
+                resolved_path = (
+                    path_obj.resolve() if hasattr(Path.resolve, "strict") else path_obj.absolute()
+                )
+
+            # Get repository root (where .git directory is or current working directory)
+            repo_root = self._get_repository_root()
+
+            # Make path relative to repository root
+            try:
+                relative_path = resolved_path.relative_to(repo_root)
+            except ValueError:
+                # Path is outside repo, use as-is but still normalize
+                relative_path = path_obj
+
+            # Convert to POSIX (forward slashes) and strip leading "./" or "/"
+            normalized = relative_path.as_posix()
+            normalized = normalized.lstrip("./")
+            normalized = normalized.lstrip("/")
+
+            return normalized
+
+        except Exception:
+            # Fallback to simple normalization if anything fails
+            return str(Path(path)).replace("\\", "/").lstrip("./").lstrip("/")
+
+    def _get_repository_root(self) -> Path:
+        """Get the repository root directory.
+
+        Returns:
+            Path to the repository root (where .git exists) or current directory
+        """
+        current_dir = Path.cwd()
+        while current_dir != current_dir.parent:
+            if (current_dir / ".git").exists():
+                return current_dir
+            current_dir = current_dir.parent
+        # Fallback to current directory if no .git found
+        return Path.cwd()
+
     def add_mapping(
         self,
         path: str,
@@ -120,8 +181,8 @@ class MappingStore:
         if page_id and title:
             raise ValueError("Cannot provide both page_id and title")
 
-        # Normalize path (convert to forward slashes for consistency)
-        normalized_path = str(Path(path)).replace("\\", "/")
+        # Normalize path to canonical repository-relative form
+        normalized_path = self._normalize_path(path)
 
         # Load current mappings
         mappings = self._load_mappings()

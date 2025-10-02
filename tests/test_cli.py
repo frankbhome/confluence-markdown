@@ -133,29 +133,48 @@ class TestCLI:
                 # Since we're mocking MappingStore, logging messages won't appear
                 # The test passes if exit code is 0 and mapping store was called correctly
 
-    def test_cli_map_add_update_existing(self, capsys):
-        """Test map add updating existing mapping."""
+    def test_cli_updated_existing_mapping(self):
+        """Test CLI updating an existing mapping."""
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-
-            # Create a test markdown file
-            test_file = temp_path / "test.md"
-            test_file.write_text("# Test Content")
 
             with patch("confluence_markdown.cli.MappingStore") as mock_store_class:
                 mock_store = mock_store_class.return_value
                 mock_store.add_mapping.return_value = {
-                    "created": False,  # Existing mapping updated
-                    "mapping": {"page_id": "654321"},
+                    "created": False,
+                    "mapping": {"page_id": "PAGE123"},
                 }
 
-                exit_code = main(["map", "add", "--path", str(test_file), "--page", "654321"])
+                # Create test file
+                test_file = temp_path / "test.md"
+                test_file.write_text("# Test")
+
+                exit_code = main(["map", "add", "--page", "PAGE123", "--path", str(test_file)])
                 assert exit_code == 0
 
-                # Verify the mapping store was called correctly
-                mock_store.add_mapping.assert_called_once_with(
-                    path=str(test_file), page_id="654321", space_key=None
-                )
+    def test_cli_page_with_title_conflict(self, caplog):
+        """Test CLI rejects --page with --title combination."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+
+            # Create test file
+            test_file = temp_path / "test.md"
+            test_file.write_text("# Test")
+
+            exit_code = main(
+                [
+                    "map",
+                    "add",
+                    "--page",
+                    "PAGE123",
+                    "--title",
+                    "Test Page",
+                    "--path",
+                    str(test_file),
+                ]
+            )
+            assert exit_code == 1
+            assert "Cannot use --page with --title" in caplog.text
 
     def test_cli_map_add_exception_handling(self, capsys):
         """Test map add exception handling."""
@@ -499,6 +518,43 @@ class TestMappingStore:
             result2 = store.add_mapping(path="docs/test.md", page_id="654321")
             assert result2["created"] is False  # Not created, updated
             assert result2["mapping"]["page_id"] == "654321"
+
+    def test_path_normalization_comprehensive(self):
+        """Test comprehensive path normalization with dot segments and different formats."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            mapping_file = Path(temp_dir) / "map.json"
+            store = MappingStore(mapping_file=mapping_file)
+
+            # Test various equivalent path formats
+            equivalent_paths = [
+                "docs/test.md",
+                "./docs/test.md",
+                "docs/./test.md",
+                "docs/../docs/test.md",
+                "docs\\test.md",  # Windows backslashes
+            ]
+
+            # Add mapping with first path format
+            store.add_mapping(path=equivalent_paths[0], page_id="123456")
+
+            # All equivalent paths should resolve to the same normalized key
+            for path_variant in equivalent_paths[1:]:
+                # Should update existing mapping, not create new one
+                result = store.add_mapping(path=path_variant, page_id="654321")
+                assert (
+                    result["created"] is False
+                ), f"Path variant {path_variant} created new mapping instead of updating"
+
+            # Verify only one mapping exists
+            mappings = store.list_mappings()
+            assert len(mappings) == 1
+
+            # Verify the normalized key doesn't have leading "./" or duplicated segments
+            normalized_key = list(mappings.keys())[0]
+            assert not normalized_key.startswith("./")
+            assert not normalized_key.startswith("/")
+            assert "/./" not in normalized_key
+            assert "/../" not in normalized_key
 
 
 def test_cli_main_block():

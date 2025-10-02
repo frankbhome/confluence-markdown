@@ -38,6 +38,13 @@ def cmd_map_add(args: argparse.Namespace) -> int:
     logger = logging.getLogger(__name__)
 
     try:
+        # Validate parameter combinations - fail fast with user-friendly messages
+        if args.page_id and args.title:
+            logger.error(
+                "Cannot use --page with --title; provide either --page or --space and --title"
+            )
+            return 1
+
         # Validate required parameters
         if not args.page_id and not (args.space and args.title):
             logger.error("Either --page or both --space and --title must be provided")
@@ -60,7 +67,7 @@ def cmd_map_add(args: argparse.Namespace) -> int:
         if args.page_id:
             # Direct page ID mapping
             result = mapping_store.add_mapping(
-                path=str(path), page_id=args.page_id, space_key=args.space if args.space else None
+                path=str(path), page_id=args.page_id, space_key=args.space
             )
         else:
             # Space + title mapping
