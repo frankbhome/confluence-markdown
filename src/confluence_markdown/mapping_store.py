@@ -9,6 +9,7 @@ and Confluence pages using a JSON file store at .cmt/map.json.
 
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Any, Dict, Optional, TypedDict
 
@@ -31,21 +32,26 @@ class MappingStore:
             mapping_file: Path to the mapping file (defaults to .cmt/map.json)
         """
         self.logger = logging.getLogger(__name__)
+        self._repo_root: Optional[Path] = None
 
         if mapping_file is None:
             # Find the repository root by looking for .git directory
             current_dir = Path.cwd()
             while current_dir != current_dir.parent:
                 if (current_dir / ".git").exists():
+                    self._repo_root = current_dir
                     break
                 current_dir = current_dir.parent
             else:
                 # Fallback to current directory if no .git found
                 current_dir = Path.cwd()
+                self._repo_root = current_dir
 
             self.mapping_file = current_dir / ".cmt" / "map.json"
         else:
             self.mapping_file = mapping_file
+            # Don't set _repo_root here since we don't know the repository location
+            # when a custom mapping_file is provided
 
         self.logger.debug(f"Using mapping file: {self.mapping_file}")
 
@@ -112,9 +118,16 @@ class MappingStore:
             try:
                 resolved_path = path_obj.resolve()
             except (OSError, RuntimeError):
-                # If resolve fails, fall back to absolute path
-                # Python 3.9 doesn't support resolve(strict=False)
-                resolved_path = path_obj.absolute()
+                # If resolve fails, try resolve(strict=False) for better normalization
+                try:
+                    resolved_path = path_obj.resolve(strict=False)
+                except TypeError:
+                    # Python 3.9 doesn't support resolve(strict=False), use realpath
+                    resolved_path = Path(os.path.realpath(str(path_obj)))
+                except OSError:
+                    # If resolve(strict=False) also fails, use realpath as fallback
+                    # This provides better symlink and component normalization than absolute()
+                    resolved_path = Path(os.path.realpath(str(path_obj)))
 
             # Get repository root (where .git directory is or current working directory)
             repo_root = self._get_repository_root()
@@ -143,13 +156,21 @@ class MappingStore:
         Returns:
             Path to the repository root (where .git exists) or current directory
         """
+        # Return cached value if available
+        if self._repo_root is not None:
+            return self._repo_root
+
+        # Perform filesystem traversal and cache the result
         current_dir = Path.cwd()
         while current_dir != current_dir.parent:
             if (current_dir / ".git").exists():
-                return current_dir
+                self._repo_root = current_dir
+                return self._repo_root
             current_dir = current_dir.parent
+
         # Fallback to current directory if no .git found
-        return Path.cwd()
+        self._repo_root = Path.cwd()
+        return self._repo_root
 
     def add_mapping(
         self,
