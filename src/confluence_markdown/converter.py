@@ -5,6 +5,7 @@
 
 import html
 import re
+from typing import List
 from urllib.parse import urlparse
 
 
@@ -35,7 +36,7 @@ class MarkdownToConfluenceConverter:
             str: Converted string in Confluence storage format.
         """
         # Store code blocks temporarily to protect them during processing
-        code_blocks: list[str] = []
+        code_blocks: List[str] = []
 
         def store_code_block(match: re.Match[str]) -> str:
             """
@@ -170,7 +171,7 @@ class MarkdownToConfluenceConverter:
 
         # Convert paragraphs (but skip lines that are already HTML or empty)
         lines = markdown.split("\n")
-        result: list[str] = []
+        result: List[str] = []
 
         for line in lines:
             line = line.strip()

@@ -10,7 +10,6 @@ is properly installed and core functionality works correctly.
 import os
 import subprocess
 import sys
-from io import StringIO
 from unittest.mock import patch
 
 
@@ -25,15 +24,25 @@ def test_smoke():
 
 
 def test_main_function_direct_call():
-    """Test that the main function can be called directly and produces expected output."""
+    """Test that the main function can be called directly and shows help."""
+    import sys
+    from io import StringIO
+    from unittest.mock import patch
+
     from confluence_markdown.__main__ import main
 
-    # Capture stdout to verify the output
-    with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
-        main()
-        output = mock_stdout.getvalue()
+    # The main function now uses CLI, so it will show help and exit with code 1
+    with patch("sys.stderr", new_callable=StringIO) as mock_stderr:
+        with patch.object(sys, "argv", ["conmd"]):  # Mock argv to avoid pytest args
+            try:
+                main()
+            except SystemExit as e:
+                # CLI exits with code 1 when no command is provided
+                assert e.code == 1
 
-    assert "confluence-markdown OK" in output
+            output = mock_stderr.getvalue()
+
+    assert "Two-way sync between Confluence and Markdown" in output
 
 
 def test_main_module_if_name_main():
@@ -43,8 +52,8 @@ def test_main_module_if_name_main():
     from io import StringIO
     from unittest.mock import patch
 
-    # Capture stdout to verify the output
-    with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+    # The CLI now shows help when no command is provided
+    with patch("sys.stderr", new_callable=StringIO) as mock_stderr:
         # Mock sys.argv to simulate command line execution
         with patch.object(sys, "argv", ["confluence_markdown.__main__"]):
             try:
@@ -54,9 +63,11 @@ def test_main_module_if_name_main():
                 # runpy might call sys.exit, which is normal for CLI tools
                 pass
 
-        output = mock_stdout.getvalue()
+        output = mock_stderr.getvalue()
 
-    assert "confluence-markdown OK" in output
+    assert (
+        "Two-way sync between Confluence and Markdown" in output or "Available commands" in output
+    )
 
 
 def test_package_main_entry_point():
@@ -72,9 +83,12 @@ def test_package_main_entry_point():
         cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     )
 
-    # Should exit successfully and print the expected message
-    assert result.returncode == 0
-    assert "confluence-markdown OK" in result.stdout
+    # CLI now exits with code 1 when no command is provided and shows help
+    assert result.returncode == 1
+    assert (
+        "Two-way sync between Confluence and Markdown" in result.stderr
+        or "Available commands" in result.stderr
+    )
 
 
 def test_cli_help_message():
