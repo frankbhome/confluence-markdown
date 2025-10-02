@@ -435,11 +435,13 @@ class TestMappingStore:
             # Mock exists to always return False (no .git directories)
             with patch.object(Path, "exists", return_value=False):
                 store = MappingStore()
-                # Should fall back to current directory (line 40 is executed)
+                # Should fall back to current directory (lines 47-48 are executed)
                 normalized_path = str(store.mapping_file).replace("\\", "/")
                 assert normalized_path.endswith(".cmt/map.json")
                 # The path should be based on the fake current directory
                 assert str(fake_cwd).replace("\\", "/") in normalized_path
+                # Verify the repo root fallback was set (covers line 48)
+                assert store._repo_root == fake_cwd
 
     def test_load_mappings_invalid_json(self):
         """Test loading mappings with invalid JSON format (lines 71-72)."""
@@ -566,6 +568,119 @@ class TestMappingStore:
             for path_variant in equivalent_paths:
                 mapping = store.get_mapping(path_variant)
                 assert mapping["page_id"] == "654321"
+
+    def test_path_resolution_error_handling(self):
+        """Test error handling in path resolution methods."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            mapping_file = Path(temp_dir) / "map.json"
+            store = MappingStore(mapping_file=mapping_file)
+
+            # Test path normalization with various edge cases that might trigger error paths
+            from unittest.mock import MagicMock, patch
+
+            # Test the fallback normalization when main logic fails
+            with patch.object(Path, "resolve", side_effect=OSError("Mock resolve error")):
+                # This should trigger the resolve(strict=False) fallback path
+                normalized = store._normalize_path("docs/test.md")
+                assert isinstance(normalized, str)
+                assert "test.md" in normalized
+
+            # Test TypeError path (Python 3.9 compatibility)
+            mock_path = MagicMock(spec=Path)
+            mock_path.resolve.side_effect = [
+                OSError("First error"),
+                TypeError("No strict parameter"),
+            ]
+
+            with patch("pathlib.Path") as mock_path_class:
+                mock_path_class.return_value = mock_path
+                with patch("os.path.realpath") as mock_realpath:
+                    mock_realpath.return_value = "/resolved/path/docs/test.md"
+                    with patch("pathlib.Path", return_value=Path("/resolved/path/docs/test.md")):
+                        # This should trigger the TypeError -> realpath fallback
+                        normalized = store._normalize_path("docs/test.md")
+                        assert isinstance(normalized, str)
+
+            # Test repository root caching when no custom mapping file is used
+            store_default = MappingStore()
+            root1 = store_default._get_repository_root()
+            root2 = store_default._get_repository_root()
+            assert root1 == root2  # Should use cached value
+            assert store_default._repo_root is not None
+
+            # Test fallback exception handling in _normalize_path
+            with patch.object(store, "_get_repository_root", side_effect=Exception("Mock error")):
+                # This should trigger the fallback normalization
+                normalized = store._normalize_path("docs\\test.md")
+                assert isinstance(normalized, str)
+                assert normalized == "docs/test.md"
+
+    def test_advanced_path_resolution_coverage(self):
+        """Test advanced path resolution scenarios for complete coverage."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            mapping_file = Path(temp_dir) / "map.json"
+            store = MappingStore(mapping_file=mapping_file)
+
+            from unittest.mock import patch
+
+            # Test OSError in second resolve attempt (line 130)
+            def mock_resolve(*args, **kwargs):
+                if "strict" in kwargs:
+                    raise OSError("Mock OSError in resolve(strict=False)")
+                else:
+                    raise OSError("Mock OSError in resolve()")
+
+            with patch.object(Path, "resolve", side_effect=mock_resolve):
+                with patch("os.path.realpath") as mock_realpath:
+                    mock_realpath.return_value = "/some/path/docs/test.md"
+                    normalized = store._normalize_path("docs/test.md")
+                    assert isinstance(normalized, str)
+                    mock_realpath.assert_called()
+
+            # Test absolute path outside repository scenario (line 150)
+            abs_path = "/completely/different/location/test.md"
+            with patch.object(Path, "is_absolute", return_value=True):
+                normalized = store._normalize_path(abs_path)
+                assert isinstance(normalized, str)
+
+            # Test repository root traversal fallback (lines 179-183)
+            with patch("pathlib.Path.cwd") as mock_cwd:
+                fake_root = Path("/fake/root")
+                mock_cwd.return_value = fake_root
+
+                # Mock a directory structure where we need to traverse up
+                def mock_exists(*args, **kwargs):
+                    # Simulate that no .git directory exists anywhere in the path
+                    return False
+
+                with patch.object(Path, "exists", side_effect=mock_exists):
+                    # Create store that will need to traverse and then fallback
+                    store_no_git = MappingStore()
+
+                    # Clear cached repo root to force traversal
+                    store_no_git._repo_root = None
+
+                    # This should traverse up directories and then fallback (lines 179-183)
+                    root = store_no_git._get_repository_root()
+                    assert root == fake_root
+                    assert store_no_git._repo_root == fake_root
+
+    def test_cli_main_module_execution(self):
+        """Test CLI main module execution to cover __name__ == '__main__' block."""
+        import subprocess
+        import sys
+
+        # Execute the CLI module directly to test the main block
+        result = subprocess.run(
+            [sys.executable, "-m", "confluence_markdown.cli", "--help"],
+            capture_output=True,
+            text=True,
+            cwd=Path(__file__).parent.parent,
+        )
+
+        # Should exit with 0 for help
+        assert result.returncode == 0
+        assert "usage: conmd" in result.stdout
 
 
 def test_cli_main_block():
