@@ -406,6 +406,100 @@ class TestMappingStore:
             assert "docs/test.md" in mappings
             assert "docs\\test.md" not in mappings
 
+    def test_mapping_store_no_git_directory(self):
+        """Test mapping store initialization when no .git directory is found (line 40)."""
+        with patch("pathlib.Path.cwd") as mock_cwd:
+            # Set up a fake current working directory
+            fake_cwd = Path("/no/git/anywhere")
+            mock_cwd.return_value = fake_cwd
+
+            # Mock exists to always return False (no .git directories)
+            with patch.object(Path, "exists", return_value=False):
+                store = MappingStore()
+                # Should fall back to current directory (line 40 is executed)
+                normalized_path = str(store.mapping_file).replace("\\", "/")
+                assert normalized_path.endswith(".cmt/map.json")
+                # The path should be based on the fake current directory
+                assert str(fake_cwd).replace("\\", "/") in normalized_path
+
+    def test_load_mappings_invalid_json(self):
+        """Test loading mappings with invalid JSON format (lines 71-72)."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            mapping_file = Path(temp_dir) / "map.json"
+            # Create invalid JSON file
+            mapping_file.write_text("invalid json content", encoding="utf-8")
+
+            store = MappingStore(mapping_file=mapping_file)
+            # Should start with empty mappings due to JSON decode error
+            mappings = store.list_mappings()
+            assert len(mappings) == 0
+
+    def test_load_mappings_invalid_format(self):
+        """Test loading mappings with non-dict format (lines 76-78)."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            mapping_file = Path(temp_dir) / "map.json"
+            # Create JSON that's not a dict
+            mapping_file.write_text('["not", "a", "dict"]', encoding="utf-8")
+
+            store = MappingStore(mapping_file=mapping_file)
+            # Should start with empty mappings due to invalid format
+            mappings = store.list_mappings()
+            assert len(mappings) == 0
+
+    def test_save_mappings_file_error(self):
+        """Test save mappings with file system error (lines 92-93)."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            mapping_file = Path(temp_dir) / "map.json"
+            store = MappingStore(mapping_file=mapping_file)
+
+            # Mock open to raise an OSError
+            with patch("builtins.open", side_effect=OSError("Permission denied")):
+                with pytest.raises(RuntimeError, match="Failed to save mappings"):
+                    store.add_mapping(path="test.md", page_id="123456")
+
+    def test_add_mapping_page_id_conflict(self):
+        """Test adding mapping with conflicting page ID."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            mapping_file = Path(temp_dir) / "map.json"
+            store = MappingStore(mapping_file=mapping_file)
+
+            # Add first mapping
+            store.add_mapping(path="docs/test1.md", page_id="CONFLICT123")
+
+            # Try to add second mapping with same page ID
+            with pytest.raises(ValueError, match="Page ID 'CONFLICT123' is already mapped"):
+                store.add_mapping(path="docs/test2.md", page_id="CONFLICT123")
+
+    def test_add_mapping_space_title_conflict(self):
+        """Test adding mapping with conflicting space+title."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            mapping_file = Path(temp_dir) / "map.json"
+            store = MappingStore(mapping_file=mapping_file)
+
+            # Add first mapping
+            store.add_mapping(path="docs/test1.md", space_key="TEST", title="Conflict Page")
+
+            # Try to add second mapping with same space+title
+            with pytest.raises(
+                ValueError, match="Space 'TEST' \\+ title 'Conflict Page' is already mapped"
+            ):
+                store.add_mapping(path="docs/test2.md", space_key="TEST", title="Conflict Page")
+
+    def test_add_mapping_update_existing(self):
+        """Test updating an existing mapping (tests 'skip self' logic line 145)."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            mapping_file = Path(temp_dir) / "map.json"
+            store = MappingStore(mapping_file=mapping_file)
+
+            # Add first mapping
+            result1 = store.add_mapping(path="docs/test.md", page_id="123456")
+            assert result1["created"] is True
+
+            # Update the same mapping (should skip self in conflict check)
+            result2 = store.add_mapping(path="docs/test.md", page_id="654321")
+            assert result2["created"] is False  # Not created, updated
+            assert result2["mapping"]["page_id"] == "654321"
+
 
 def test_cli_main_block():
     """Test the if __name__ == '__main__' execution block."""
