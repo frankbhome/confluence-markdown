@@ -576,7 +576,7 @@ class TestMappingStore:
             store = MappingStore(mapping_file=mapping_file)
 
             # Test path normalization with various edge cases that might trigger error paths
-            from unittest.mock import MagicMock, patch
+            from unittest.mock import patch
 
             # Test the fallback normalization when main logic fails
             with patch.object(Path, "resolve", side_effect=OSError("Mock resolve error")):
@@ -586,20 +586,21 @@ class TestMappingStore:
                 assert "test.md" in normalized
 
             # Test TypeError path (Python 3.9 compatibility)
-            mock_path = MagicMock(spec=Path)
-            mock_path.resolve.side_effect = [
-                OSError("First error"),
-                TypeError("No strict parameter"),
-            ]
+            with patch("os.path.realpath") as mock_realpath:
+                mock_realpath.return_value = "/resolved/path/docs/test.md"
 
-            with patch("pathlib.Path") as mock_path_class:
-                mock_path_class.return_value = mock_path
-                with patch("os.path.realpath") as mock_realpath:
-                    mock_realpath.return_value = "/resolved/path/docs/test.md"
-                    with patch("pathlib.Path", return_value=Path("/resolved/path/docs/test.md")):
-                        # This should trigger the TypeError -> realpath fallback
-                        normalized = store._normalize_path("docs/test.md")
-                        assert isinstance(normalized, str)
+                # Create a mock that first raises OSError, then TypeError on resolve
+                def mock_resolve(*args, **kwargs):
+                    if "strict" in kwargs:
+                        raise TypeError("No strict parameter")
+                    else:
+                        raise OSError("Mock resolve error")
+
+                with patch.object(Path, "resolve", side_effect=mock_resolve):
+                    # This should trigger the TypeError -> realpath fallback
+                    normalized = store._normalize_path("docs/test.md")
+                    assert isinstance(normalized, str)
+                    mock_realpath.assert_called()
 
             # Test repository root caching when no custom mapping file is used
             store_default = MappingStore()
