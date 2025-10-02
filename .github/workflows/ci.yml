@@ -92,4 +92,4 @@ jobs:
         run: poetry run pytest tests/test_conversion_fidelity.py -v
 
       - name: CLI Smoke Test
-        run: poetry run conmd
+        run: poetry run conmd --help
