@@ -239,7 +239,7 @@ class MappingStore:
         Returns:
             Mapping entry if found, None otherwise
         """
-        normalized_path = str(Path(path)).replace("\\", "/")
+        normalized_path = self._normalize_path(path)
         mappings = self._load_mappings()
         return mappings.get(normalized_path)
 
@@ -260,7 +260,7 @@ class MappingStore:
         Returns:
             True if mapping was removed, False if it didn't exist
         """
-        normalized_path = str(Path(path)).replace("\\", "/")
+        normalized_path = self._normalize_path(path)
         mappings = self._load_mappings()
 
         if normalized_path in mappings:

@@ -537,15 +537,16 @@ class TestMappingStore:
             # Add mapping with first path format
             store.add_mapping(path=equivalent_paths[0], page_id="123456")
 
-            # All equivalent paths should resolve to the same normalized key
-            for path_variant in equivalent_paths[1:]:
-                # Should update existing mapping, not create new one
-                result = store.add_mapping(path=path_variant, page_id="654321")
+            # Test that all equivalent paths resolve to the same normalized key
+            # by checking that get_mapping returns the same result for all variants
+            for path_variant in equivalent_paths:
+                mapping = store.get_mapping(path_variant)
+                assert mapping is not None, f"Path variant {path_variant} not found"
                 assert (
-                    result["created"] is False
-                ), f"Path variant {path_variant} created new mapping instead of updating"
+                    mapping["page_id"] == "123456"
+                ), f"Path variant {path_variant} has wrong page_id"
 
-            # Verify only one mapping exists
+            # Verify only one mapping exists in storage
             mappings = store.list_mappings()
             assert len(mappings) == 1
 
@@ -555,6 +556,16 @@ class TestMappingStore:
             assert not normalized_key.startswith("/")
             assert "/./" not in normalized_key
             assert "/../" not in normalized_key
+
+            # Test that we can update the mapping using any equivalent path
+            result = store.add_mapping(path="./docs/test.md", page_id="654321")
+            assert result["created"] is False  # Should be an update
+            assert result["mapping"]["page_id"] == "654321"
+
+            # Verify all paths still resolve to the updated mapping
+            for path_variant in equivalent_paths:
+                mapping = store.get_mapping(path_variant)
+                assert mapping["page_id"] == "654321"
 
 
 def test_cli_main_block():
