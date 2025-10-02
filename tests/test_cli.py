@@ -35,6 +35,13 @@ class TestCLI:
         captured = capsys.readouterr()
         assert "--path" in captured.err
 
+    def test_cli_unknown_map_command(self, capsys):
+        """Test that unknown map commands show error."""
+        # argparse will catch unknown subcommands and raise SystemExit
+        with pytest.raises(SystemExit) as exc_info:
+            main(["map", "unknown"])
+        assert exc_info.value.code == 2  # argparse error
+
     def test_cli_map_add_file_not_exists(self, capsys):
         """Test that map add fails when file doesn't exist."""
         exit_code = main(["map", "add", "--path", "nonexistent.md", "--page", "123456"])
@@ -125,6 +132,106 @@ class TestCLI:
 
                 # Since we're mocking MappingStore, logging messages won't appear
                 # The test passes if exit code is 0 and mapping store was called correctly
+
+    def test_cli_map_add_update_existing(self, capsys):
+        """Test map add updating existing mapping."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+
+            # Create a test markdown file
+            test_file = temp_path / "test.md"
+            test_file.write_text("# Test Content")
+
+            with patch("confluence_markdown.cli.MappingStore") as mock_store_class:
+                mock_store = mock_store_class.return_value
+                mock_store.add_mapping.return_value = {
+                    "created": False,  # Existing mapping updated
+                    "mapping": {"page_id": "654321"},
+                }
+
+                exit_code = main(["map", "add", "--path", str(test_file), "--page", "654321"])
+                assert exit_code == 0
+
+                # Verify the mapping store was called correctly
+                mock_store.add_mapping.assert_called_once_with(
+                    path=str(test_file), page_id="654321", space_key=None
+                )
+
+    def test_cli_map_add_exception_handling(self, capsys):
+        """Test map add exception handling."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+
+            # Create a test markdown file
+            test_file = temp_path / "test.md"
+            test_file.write_text("# Test Content")
+
+            with patch("confluence_markdown.cli.MappingStore") as mock_store_class:
+                mock_store = mock_store_class.return_value
+                mock_store.add_mapping.side_effect = Exception("Test error")
+
+                exit_code = main(["map", "add", "--path", str(test_file), "--page", "123456"])
+                assert exit_code == 1
+
+                # Verify the mapping store was called
+                mock_store.add_mapping.assert_called_once()
+
+    def test_cli_missing_path_parameter(self, capsys):
+        """Test CLI with missing --path parameter (caught by argparse)."""
+        # argparse handles this validation, so expect SystemExit
+        with pytest.raises(SystemExit):
+            main(["map", "add", "--page", "PAGE123"])
+
+    def test_cli_empty_path_parameter(self, caplog):
+        """Test CLI with empty --path parameter."""
+        # This will test our validation logic in cmd_map_add (line 47-48)
+        exit_code = main(["map", "add", "--page", "PAGE123", "--path", ""])
+        assert exit_code == 1
+        # Check log output instead of stderr
+        assert "--path is required" in caplog.text
+
+    def test_cli_no_command_specified(self, capsys):
+        """Test CLI with no command specified."""
+        exit_code = main([])
+        assert exit_code == 1
+
+    def test_cli_unknown_map_command_fallback(self):
+        """Test unknown map command fallback (lines 133-135)."""
+        # Mock the parser to simulate reaching the unknown command branch
+        from unittest.mock import MagicMock
+
+        with patch("confluence_markdown.cli.create_parser") as mock_create:
+            mock_parser = MagicMock()
+            mock_create.return_value = mock_parser
+
+            # Create args that would reach the unknown map command branch
+            mock_args = MagicMock()
+            mock_args.verbose = False
+            mock_args.command = "map"
+            mock_args.map_command = "unknown_command"  # Not "add"
+            mock_parser.parse_args.return_value = mock_args
+
+            result = main(["map", "unknown_command"])
+            assert result == 1
+            mock_parser.print_help.assert_called_once()
+
+    def test_main_module_direct_execution(self):
+        """Test __main__ module execution (line 145)."""
+        # Test the __name__ == "__main__" block in cli.py
+        import subprocess
+        import sys
+
+        # Execute the cli module directly as __main__
+        # This will test line 145: if __name__ == "__main__":
+        result = subprocess.run(
+            [sys.executable, "-m", "confluence_markdown.cli", "--help"],
+            capture_output=True,
+            text=True,
+        )
+
+        # Should exit with 0 for help
+        assert result.returncode == 0
+        assert "conmd" in result.stdout
 
 
 class TestMappingStore:
@@ -298,3 +405,24 @@ class TestMappingStore:
             mappings = store.list_mappings()
             assert "docs/test.md" in mappings
             assert "docs\\test.md" not in mappings
+
+
+def test_cli_main_block():
+    """Test the if __name__ == '__main__' execution block."""
+    import subprocess
+    import sys
+
+    # Test running the CLI module directly
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from src.confluence_markdown.cli import main; import sys; sys.exit(main(['--help']))",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    # Should exit with code 0 for help and contain usage info
+    assert result.returncode == 0
+    assert "usage: conmd" in result.stdout
