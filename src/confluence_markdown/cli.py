@@ -3,7 +3,11 @@
 
 """CLI interface for confluence-markdown tool.
 
-This module provides the command-line interface for the confluence-markdown tool,
+This module p    # Handle commands
+    if args.command == "map":
+        if args.map_command == "add":
+            return cmd_map_add(args)
+    else:he command-line interface for the confluence-markdown tool,
 supporting various operations like mapping management, push/pull operations, etc.
 """
 
@@ -65,10 +69,13 @@ def cmd_map_add(args: argparse.Namespace) -> int:
 
         # Create the mapping entry
         if args.page_id:
-            # Direct page ID mapping
-            result = mapping_store.add_mapping(
-                path=str(path), page_id=args.page_id, space_key=args.space
-            )
+            # Direct page ID mapping - only pass space_key if provided
+            if args.space:
+                result = mapping_store.add_mapping(
+                    path=str(path), page_id=args.page_id, space_key=args.space
+                )
+            else:
+                result = mapping_store.add_mapping(path=str(path), page_id=args.page_id)
         else:
             # Space + title mapping
             result = mapping_store.add_mapping(

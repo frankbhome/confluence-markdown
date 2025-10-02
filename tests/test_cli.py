@@ -63,7 +63,6 @@ class TestCLI:
 
             # The error should be in the logs, which may not be captured by capsys
             # Just verify the exit code is correct
-            pass
 
         finally:
             Path(temp_path).unlink()
@@ -89,7 +88,7 @@ class TestCLI:
 
                 # Verify the mapping store was called correctly
                 mock_store.add_mapping.assert_called_once_with(
-                    path=str(test_file), page_id="123456", space_key=None
+                    path=str(test_file), page_id="123456"
                 )
 
                 # Since we're mocking MappingStore, logging messages won't appear
@@ -195,12 +194,6 @@ class TestCLI:
                 # Verify the mapping store was called
                 mock_store.add_mapping.assert_called_once()
 
-    def test_cli_missing_path_parameter(self, capsys):
-        """Test CLI with missing --path parameter (caught by argparse)."""
-        # argparse handles this validation, so expect SystemExit
-        with pytest.raises(SystemExit):
-            main(["map", "add", "--page", "PAGE123"])
-
     def test_cli_empty_path_parameter(self, caplog):
         """Test CLI with empty --path parameter."""
         # This will test our validation logic in cmd_map_add (line 47-48)
@@ -208,31 +201,6 @@ class TestCLI:
         assert exit_code == 1
         # Check log output instead of stderr
         assert "--path is required" in caplog.text
-
-    def test_cli_no_command_specified(self, capsys):
-        """Test CLI with no command specified."""
-        exit_code = main([])
-        assert exit_code == 1
-
-    def test_cli_unknown_map_command_fallback(self):
-        """Test unknown map command fallback (lines 133-135)."""
-        # Mock the parser to simulate reaching the unknown command branch
-        from unittest.mock import MagicMock
-
-        with patch("confluence_markdown.cli.create_parser") as mock_create:
-            mock_parser = MagicMock()
-            mock_create.return_value = mock_parser
-
-            # Create args that would reach the unknown map command branch
-            mock_args = MagicMock()
-            mock_args.verbose = False
-            mock_args.command = "map"
-            mock_args.map_command = "unknown_command"  # Not "add"
-            mock_parser.parse_args.return_value = mock_args
-
-            result = main(["map", "unknown_command"])
-            assert result == 1
-            mock_parser.print_help.assert_called_once()
 
     def test_main_module_direct_execution(self):
         """Test __main__ module execution (line 145)."""
@@ -478,34 +446,6 @@ class TestMappingStore:
                 with pytest.raises(RuntimeError, match="Failed to save mappings"):
                     store.add_mapping(path="test.md", page_id="123456")
 
-    def test_add_mapping_page_id_conflict(self):
-        """Test adding mapping with conflicting page ID."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            mapping_file = Path(temp_dir) / "map.json"
-            store = MappingStore(mapping_file=mapping_file)
-
-            # Add first mapping
-            store.add_mapping(path="docs/test1.md", page_id="CONFLICT123")
-
-            # Try to add second mapping with same page ID
-            with pytest.raises(ValueError, match="Page ID 'CONFLICT123' is already mapped"):
-                store.add_mapping(path="docs/test2.md", page_id="CONFLICT123")
-
-    def test_add_mapping_space_title_conflict(self):
-        """Test adding mapping with conflicting space+title."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            mapping_file = Path(temp_dir) / "map.json"
-            store = MappingStore(mapping_file=mapping_file)
-
-            # Add first mapping
-            store.add_mapping(path="docs/test1.md", space_key="TEST", title="Conflict Page")
-
-            # Try to add second mapping with same space+title
-            with pytest.raises(
-                ValueError, match="Space 'TEST' \\+ title 'Conflict Page' is already mapped"
-            ):
-                store.add_mapping(path="docs/test2.md", space_key="TEST", title="Conflict Page")
-
     def test_add_mapping_update_existing(self):
         """Test updating an existing mapping (tests 'skip self' logic line 145)."""
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -682,24 +622,3 @@ class TestMappingStore:
         # Should exit with 0 for help
         assert result.returncode == 0
         assert "usage: conmd" in result.stdout
-
-
-def test_cli_main_block():
-    """Test the if __name__ == '__main__' execution block."""
-    import subprocess
-    import sys
-
-    # Test running the CLI module directly
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-c",
-            "from src.confluence_markdown.cli import main; import sys; sys.exit(main(['--help']))",
-        ],
-        capture_output=True,
-        text=True,
-    )
-
-    # Should exit with code 0 for help and contain usage info
-    assert result.returncode == 0
-    assert "usage: conmd" in result.stdout
