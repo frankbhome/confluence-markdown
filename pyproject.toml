@@ -62,6 +62,8 @@ select = [
 ]
 ignore = [
     "E501",  # line too long (handled by formatter)
+    "UP006", # typing.Dict/List -> dict/list for type annotations (Python 3.9 compatibility)
+    "UP035", # typing.List/Dict -> list/dict (not compatible with Python 3.9 in all cases)
 ]
 
 [tool.ruff.format]

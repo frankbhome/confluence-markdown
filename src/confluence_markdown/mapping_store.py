@@ -10,7 +10,7 @@ and Confluence pages using a JSON file store at .cmt/map.json.
 import json
 import logging
 from pathlib import Path
-from typing import Any, Optional, TypedDict
+from typing import Any, Dict, Optional, TypedDict
 
 
 class MappingEntry(TypedDict, total=False):
@@ -53,7 +53,7 @@ class MappingStore:
         """Ensure the .cmt directory exists."""
         self.mapping_file.parent.mkdir(parents=True, exist_ok=True)
 
-    def _load_mappings(self) -> dict[str, MappingEntry]:
+    def _load_mappings(self) -> Dict[str, MappingEntry]:
         """Load mappings from the JSON file.
 
         Returns:
@@ -77,7 +77,7 @@ class MappingStore:
             self.logger.warning(f"Failed to load mappings: {e}, starting fresh")
             return {}
 
-    def _save_mappings(self, mappings: dict[str, MappingEntry]) -> None:
+    def _save_mappings(self, mappings: Dict[str, MappingEntry]) -> None:
         """Save mappings to the JSON file.
 
         Args:
@@ -112,11 +112,9 @@ class MappingStore:
             try:
                 resolved_path = path_obj.resolve()
             except (OSError, RuntimeError):
-                # If resolve fails, use resolve(strict=False) for Python 3.10+
-                # or manually normalize for older versions
-                resolved_path = (
-                    path_obj.resolve() if hasattr(Path.resolve, "strict") else path_obj.absolute()
-                )
+                # If resolve fails, fall back to absolute path
+                # Python 3.9 doesn't support resolve(strict=False)
+                resolved_path = path_obj.absolute()
 
             # Get repository root (where .git directory is or current working directory)
             repo_root = self._get_repository_root()
@@ -159,7 +157,7 @@ class MappingStore:
         page_id: Optional[str] = None,
         space_key: Optional[str] = None,
         title: Optional[str] = None,
-    ) -> dict[str, Any]:
+    ) -> Dict[str, Any]:
         """Add or update a mapping between a file and Confluence page.
 
         Args:
@@ -243,7 +241,7 @@ class MappingStore:
         mappings = self._load_mappings()
         return mappings.get(normalized_path)
 
-    def list_mappings(self) -> dict[str, MappingEntry]:
+    def list_mappings(self) -> Dict[str, MappingEntry]:
         """List all current mappings.
 
         Returns:
