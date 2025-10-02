@@ -111,8 +111,12 @@ class MappingStore:
             Canonical repository-relative path string
         """
         try:
+            # First normalize backslashes to forward slashes for cross-platform consistency
+            # This ensures that Windows-style paths work correctly on all platforms
+            normalized_path = path.replace("\\", "/")
+
             # Convert to Path object and resolve dot segments
-            path_obj = Path(path)
+            path_obj = Path(normalized_path)
 
             # Try to resolve the path (may not exist yet)
             try:
@@ -136,8 +140,14 @@ class MappingStore:
             try:
                 relative_path = resolved_path.relative_to(repo_root)
             except ValueError:
-                # Path is outside repo, use as-is but still normalize
-                relative_path = path_obj
+                # Path is outside repo or can't be made relative - check if it's already relative
+                if not path_obj.is_absolute():
+                    # For relative paths that can't be made relative to repo root,
+                    # use the original path object for consistent normalization
+                    relative_path = path_obj
+                else:
+                    # For absolute paths outside repo, use as-is but still normalize
+                    relative_path = path_obj
 
             # Convert to POSIX (forward slashes) and strip leading "./" or "/"
             normalized = relative_path.as_posix()
