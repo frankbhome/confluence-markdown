@@ -11,7 +11,7 @@ import argparse
 import logging
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 from .mapping_store import MappingStore
 
@@ -117,7 +117,7 @@ def create_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: Optional[List[str]] = None) -> int:
     """Main CLI entry point.
 
     Args:
