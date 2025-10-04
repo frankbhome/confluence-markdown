@@ -1,7 +1,6 @@
 ---
 title: "Design – Conversion Pipeline"
 confluence-page-id: "123458"
-jira-epic: CMD-50
 ---
 
 # Design – Conversion Pipeline

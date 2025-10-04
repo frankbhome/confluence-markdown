@@ -1,7 +1,7 @@
 # Copyright (c) 2025 Francis Bain
 # SPDX-License-Identifier: Apache-2.0
 
-"""Comprehensive tests for Confluence API adapter implementation (CMD-43)."""
+"""Comprehensive tests for Confluence API adapter implementation."""
 
 import json
 from unittest.mock import patch
@@ -35,7 +35,7 @@ class MockResponse:
 
 
 class TestConfluenceClient:
-    """Test suite for ConfluenceClient covering CMD-43 acceptance criteria."""
+    """Test suite for ConfluenceClient covering API functionality."""
 
     def test_client_initialization_with_token(self):
         """Test client initializes correctly with personal access token."""
@@ -276,10 +276,10 @@ class TestConfluenceClient:
         assert 500 in adapter.max_retries.status_forcelist
 
     def test_cmd43_method_aliases_exist(self):
-        """Test that CMD-43 specified method names exist and work."""
+        """Test that required API method names exist and work."""
         client = ConfluenceClient(base_url="https://example.atlassian.net/wiki", token="test")
 
-        # Verify the CMD-43 acceptance criteria method names exist
+        # Verify the required API method names exist
         assert hasattr(client, "getPage")
         assert hasattr(client, "createPage")
         assert hasattr(client, "updatePage")

@@ -1,0 +1,83 @@
+# Gitleaks configuration for confluence-markdown
+# Enhanced secret scanning configuration for CI/CD security
+
+title = "confluence-markdown Security Scanning"
+
+[extend]
+# Use default gitleaks rules as base
+useDefault = true
+
+[[rules]]
+id = "confluence-token"
+description = "Confluence API Token"
+regex = '''(?i)(confluence[_-]?token|confluence[_-]?api[_-]?key)\s*[:=]\s*['"]*([a-zA-Z0-9]{24,})['"]*'''
+secretGroup = 2
+
+[[rules]]
+id = "confluence-password"
+description = "Confluence Password in URL"
+regex = '''(?i)https?://[^:]+:([^@\s]+)@[^/]*atlassian\.net'''
+secretGroup = 1
+
+[[rules]]
+id = "github-token"
+description = "GitHub Token"
+regex = '''(?i)(github[_-]?token|gh[_-]?token)\s*[:=]\s*['"]*([a-zA-Z0-9_]{36,255})['"]*'''
+secretGroup = 2
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(api[_-]?key|apikey|secret[_-]?key)\s*[:=]\s*['"]*([a-zA-Z0-9]{20,})['"]*'''
+secretGroup = 2
+
+[[rules]]
+id = "python-env-secrets"
+description = "Python Environment Secrets"
+regex = '''(?i)(password|token|secret|key)\s*=\s*['"]+([^'"\s]{8,})['"]+'''
+secretGroup = 2
+
+# File path allowlists - targeted exclusions for known mock credentials
+[allowlist]
+description = "Allowlisted files and patterns"
+files = [
+  # Specific test files with known mock credentials
+  '''tests/test_confluence_api\.py''',
+  '''tests/fixtures/.*''',
+
+  # Example documentation only (not all docs)
+  '''docs/examples/.*\.md''',
+
+  # Gitleaks config only (be careful with this)
+  '''\.gitleaks\.toml''',
+  '''pyproject\.toml''',
+]
+
+paths = [
+  # Example and documentation directories
+  '''docs/examples/''',
+  '''examples/''',
+]
+
+# Pattern allowlists for known false positives
+regexes = [
+  # Example credentials in documentation
+  '''test@example\.com''',
+  '''your-confluence-token-here''',
+  '''CONFLUENCE_TOKEN.*example''',
+
+  # Base64 encoded test strings
+  '''dGVzdA==''',  # "test" in base64
+
+  # UUID patterns used in tests
+  '''[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}''',
+
+  # Test and example values
+  '''(?i)(test|example|mock|fake|demo|placeholder)''',
+]
+
+# Entropy detection settings
+[allowlist.entropy]
+# Reduce false positives from high-entropy test data
+min = 4.5
+max = 7.0

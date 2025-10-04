@@ -1,7 +1,7 @@
 # Copyright (c) 2025 Francis Bain
 # SPDX-License-Identifier: Apache-2.0
 
-"""Conversion fidelity tests for CMD-44: Basic conversion fidelity tests.
+"""Conversion fidelity tests for basic conversion accuracy validation.
 
 This mod        markdown = '```python\ndef test():\n    pass\n```'
         result = self.converter.convert(markdown)e contains automated tests that validate Markdown → Confluence
@@ -102,7 +102,7 @@ class TestConversionFidelity:
                 missing_elements.append(element)
         return missing_elements
 
-    # Test Cases for CMD-44 Acceptance Criteria
+    # Test Cases for Conversion Fidelity Requirements
 
     @pytest.mark.parametrize("test_case", TEST_CASES)
     def test_conversion_fidelity(self, test_case: ConversionTest) -> None:
@@ -124,7 +124,7 @@ class TestConversionFidelity:
         # Calculate fidelity
         fidelity = self._calculate_fidelity(actual_content, expected_content)
 
-        # Ensure fidelity meets 95% requirement (CMD-44 acceptance criteria)
+        # Ensure fidelity meets 95% requirement for conversion accuracy
         assert fidelity >= 95.0, (
             f"Conversion fidelity for {test_case.name} is {fidelity:.1f}%, "
             f"below required 95%.\n"
