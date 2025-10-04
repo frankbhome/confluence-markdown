@@ -27,4 +27,4 @@ the v0.2.0 milestone.
 ## Traceability
 
 - Related Epic: CMD-45
-- Linked Stories: CMD-46, CMD-47
+- Linked Stories: PUSH-001, PULL-001

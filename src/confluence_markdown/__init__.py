@@ -12,6 +12,18 @@ from .confluence_api import (
     ServerError,
 )
 from .converter import MarkdownToConfluenceConverter
+from .errors import (
+    EXIT_API_ERROR,
+    EXIT_CONFIG_ERROR,
+    EXIT_CONVERSION_ERROR,
+    EXIT_SUCCESS,
+    APIError,
+    AuthenticationError,
+    ConfigError,
+    ConversionError,
+    PushError,
+    VersionConflictError,
+)
 
 __all__ = [
     "ConfluenceClient",
@@ -22,4 +34,14 @@ __all__ = [
     "RateLimitError",
     "ServerError",
     "MarkdownToConfluenceConverter",
+    "APIError",
+    "AuthenticationError",
+    "ConfigError",
+    "ConversionError",
+    "PushError",
+    "VersionConflictError",
+    "EXIT_SUCCESS",
+    "EXIT_API_ERROR",
+    "EXIT_CONFIG_ERROR",
+    "EXIT_CONVERSION_ERROR",
 ]
