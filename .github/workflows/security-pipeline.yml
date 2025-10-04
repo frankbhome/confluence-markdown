@@ -125,13 +125,20 @@ jobs:
           PROHIBITED_LICENSES="GPL-2.0,GPL-3.0,AGPL-3.0,LGPL-2.1,LGPL-3.0,SSPL-1.0"
 
           # Check if any prohibited licenses are found (excluding known dev-only exceptions)
-          EXCLUDED_PACKAGES="yamllint,bandit"  # Dev tools with GPL licenses that don't ship with the product
-          if poetry run pip-licenses --format=json | jq -r --arg excluded "$EXCLUDED_PACKAGES" '
-            .[] | select(.Name | test($excluded) | not) | .License' | grep -E "(GPL|AGPL|LGPL|SSPL)" ; then
-            echo "❌ ERROR: Prohibited copyleft license detected!"
-            echo "Found licenses that may conflict with Apache-2.0 in production dependencies"
+          EXCLUDED_PACKAGES=("yamllint" "bandit")  # Dev tools with GPL licenses that don't ship with the product
+          echo "Checking licenses (excluding dev tools: ${EXCLUDED_PACKAGES[*]})..."
+
+          # Get prohibited licenses excluding dev tools
+          PROHIBITED_IN_PROD=$(poetry run pip-licenses --format=json | jq -r '
+            .[] | select(.Name != "yamllint" and .Name != "bandit") |
+            select(.License | test("GPL|AGPL|LGPL|SSPL")) | .Name' || true)
+
+          if [ ! -z "$PROHIBITED_IN_PROD" ]; then
+            echo "❌ ERROR: Prohibited copyleft license detected in production dependencies!"
+            echo "Found licenses that may conflict with Apache-2.0:"
+            echo "$PROHIBITED_IN_PROD"
             echo "Prohibited licenses: ${PROHIBITED_LICENSES}"
-            echo "Excluded dev tools: ${EXCLUDED_PACKAGES}"
+            echo "Excluded dev tools: ${EXCLUDED_PACKAGES[*]}"
             poetry run pip-licenses --format=plain
             exit 1
           else
@@ -287,11 +294,11 @@ jobs:
             fi
           fi
 
-          # Check license compliance
+          # Check license compliance (excluding dev tools)
           if [ -f "./reports/license-report.json" ]; then
-            PROHIBITED=$(jq -r '.[] | select(.License | test("GPL|AGPL|LGPL|SSPL")) | .Name' ./reports/license-report.json || true)
+            PROHIBITED=$(jq -r '.[] | select(.Name != "yamllint" and .Name != "bandit") | select(.License | test("GPL|AGPL|LGPL|SSPL")) | .Name' ./reports/license-report.json || true)
             if [ ! -z "$PROHIBITED" ]; then
-              echo "❌ LICENSE GATE FAILED: Prohibited licenses detected:"
+              echo "❌ LICENSE GATE FAILED: Prohibited licenses detected in production dependencies:"
               echo "$PROHIBITED"
               exit 1
             fi
