@@ -3,6 +3,31 @@
 All notable changes will be documented here.
 This project adheres to [Semantic Versioning](https://semver.org).
 
+## [Unreleased]
+
+### Changed
+
+- **BREAKING**: Refactored Confluence API client to use
+  `atlassian-python-api` library (CMD-48)
+  - Replaced custom HTTP client implementation with upstream library
+  - Maintains same public API for backward compatibility
+  - Improved error handling and retry logic through library defaults
+  - Better integration with Confluence Cloud REST API
+  - Reduced maintenance overhead by using well-maintained upstream library
+- **Dependencies**: Added `atlassian-python-api ^4.0.7` as core dependency
+- **Performance**: Leverages library's built-in connection pooling and
+  session management
+
+### Migration Notes
+
+- **Environment Variables**: No changes required - same `CMT_CONF_BASE_URL`,
+  `CMT_CONF_EMAIL`, `CMT_CONF_TOKEN`
+- **API Compatibility**: All existing method signatures preserved
+- **Error Types**: Same exception hierarchy maintained (`AuthError`,
+  `NotFoundError`, etc.)
+- **Rollback**: If issues occur, previous custom implementation preserved
+  in `confluence_api_old.py`
+
 ## v0.2.0 (2025-09-20)
 
 ### Added
