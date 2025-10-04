@@ -2,6 +2,7 @@
 name: Enhanced Security Pipeline
 permissions:
   contents: read
+  actions: write  # Required for actions/cache@v4 to save caches
 
 on:
   pull_request:
@@ -48,7 +49,7 @@ jobs:
           poetry install
 
       - name: Install pip-audit
-        run: poetry add pip-audit --group dev
+        run: poetry run pip install --no-deps pip-audit
 
       - name: Run vulnerability scan
         run: |
@@ -111,7 +112,7 @@ jobs:
           poetry install
 
       - name: Install license scanning tools
-        run: poetry add pip-licenses --group dev
+        run: poetry run pip install --no-deps pip-licenses
 
       - name: Generate license reports
         run: |
@@ -202,7 +203,7 @@ jobs:
       - name: Install SBOM tools
         run: |
           pip install cyclonedx-bom
-          poetry add cyclonedx-bom --group dev
+          poetry run pip install --no-deps cyclonedx-bom
 
       - name: Generate SBOM
         run: |

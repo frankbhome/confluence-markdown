@@ -37,22 +37,19 @@ description = "Python Environment Secrets"
 regex = '''(?i)(password|token|secret|key)\s*=\s*['"]+([^'"\s]{8,})['"]+'''
 secretGroup = 2
 
-# File path allowlists - exclude test files and documentation
+# File path allowlists - targeted exclusions for known mock credentials
 [allowlist]
 description = "Allowlisted files and patterns"
 files = [
-  # Test files with mock credentials
-  '''tests/.*''',
-  '''test_.*\.py''',
+  # Specific test files with known mock credentials
+  '''tests/test_confluence_api\.py''',
+  '''tests/fixtures/.*''',
 
-  # Documentation and examples
-  '''docs/.*\.md''',
-  '''README\.md''',
-  '''CONTRIBUTING\.md''',
+  # Example documentation only (not all docs)
+  '''docs/examples/.*\.md''',
 
-  # Configuration files that may contain example patterns
+  # Gitleaks config only (be careful with this)
   '''\.gitleaks\.toml''',
-  '''\.github/workflows/.*\.yml''',
   '''pyproject\.toml''',
 ]
 

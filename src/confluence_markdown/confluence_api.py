@@ -592,9 +592,16 @@ class ConfluenceClient:
         if not resp.ok:
             self._handle_error(resp, f"add_labels(page_id={page_id})")
 
-    # Convenience methods with alternative naming
+    # Alternative naming convention methods for API compatibility
+    # These methods use camelCase naming to match Confluence's REST API convention.
+    # Use these if you prefer API-style naming; otherwise use the snake_case methods.
+
     def getPage(self, page_id: str, *, expand: tuple[str, ...] = ("version",)) -> Page:
-        """Alias for get_page_by_id with alternative naming convention."""
+        """Alias for get_page_by_id with alternative naming convention.
+
+        This method uses camelCase naming for consistency with Confluence REST API.
+        Functionally identical to get_page_by_id().
+        """
         return self.get_page_by_id(page_id, expand=expand)
 
     def createPage(
@@ -606,7 +613,11 @@ class ConfluenceClient:
         parent_id: str | None = None,
         labels: Iterable[str] | None = None,
     ) -> Page:
-        """Alias for create_page with alternative naming convention."""
+        """Alias for create_page with alternative naming convention.
+
+        This method uses camelCase naming for consistency with Confluence REST API.
+        Functionally identical to create_page().
+        """
         return self.create_page(
             space_key=space_key,
             title=title,
@@ -623,7 +634,11 @@ class ConfluenceClient:
         title: str | None = None,
         expected_version: int | None = None,
     ) -> Page:
-        """Alias for update_page with alternative naming convention."""
+        """Alias for update_page with alternative naming convention.
+
+        This method uses camelCase naming for consistency with Confluence REST API.
+        Functionally identical to update_page().
+        """
         return self.update_page(
             page_id=page_id,
             html_storage=html_storage,
