@@ -189,15 +189,15 @@ jobs:
           poetry install
 
       - name: Install SBOM tools
-        run: poetry add cyclonedx-bom --group dev
+        run: poetry add cyclonedx-python-lib --group dev
 
       - name: Generate SBOM
         run: |
           echo "📦 Generating Software Bill of Materials..."
 
-          # Generate CycloneDX SBOM
-          poetry run cyclonedx-py -o sbom-cyclonedx.json
-          poetry run cyclonedx-py -o sbom-cyclonedx.xml --output-format xml
+          # Generate CycloneDX SBOM using Poetry command
+          poetry run cyclonedx-py poetry -o sbom-cyclonedx.json
+          poetry run cyclonedx-py poetry -o sbom-cyclonedx.xml --output-format xml
 
           # Generate dependency tree and reports
           poetry show --tree > dependency-tree.txt
