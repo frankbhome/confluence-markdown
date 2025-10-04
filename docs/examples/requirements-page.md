@@ -1,7 +1,6 @@
 ---
 title: "Requirements v0.2.0"
 confluence-page-id: "123457"
-jira-epic: CMD-45
 ---
 
 # Requirements – Release v0.2.0
@@ -26,5 +25,5 @@ the v0.2.0 milestone.
 
 ## Traceability
 
-- Related Epic: CMD-45
+- Category: Requirements Documentation
 - Linked Stories: PUSH-001, PULL-001

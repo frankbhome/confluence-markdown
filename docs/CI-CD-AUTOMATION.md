@@ -1,6 +1,6 @@
 # CI/CD Automation Guide
 
-This document explains how to use the automated CI/CD features implemented in CMD-23.
+This document explains how to use the automated CI/CD features.
 
 ## Overview
 

@@ -592,9 +592,9 @@ class ConfluenceClient:
         if not resp.ok:
             self._handle_error(resp, f"add_labels(page_id={page_id})")
 
-    # Convenience methods matching CMD-43 acceptance criteria naming
+    # Convenience methods with alternative naming
     def getPage(self, page_id: str, *, expand: tuple[str, ...] = ("version",)) -> Page:
-        """Alias for get_page_by_id following CMD-43 naming convention."""
+        """Alias for get_page_by_id with alternative naming convention."""
         return self.get_page_by_id(page_id, expand=expand)
 
     def createPage(
@@ -606,7 +606,7 @@ class ConfluenceClient:
         parent_id: str | None = None,
         labels: Iterable[str] | None = None,
     ) -> Page:
-        """Alias for create_page following CMD-43 naming convention."""
+        """Alias for create_page with alternative naming convention."""
         return self.create_page(
             space_key=space_key,
             title=title,
@@ -623,7 +623,7 @@ class ConfluenceClient:
         title: str | None = None,
         expected_version: int | None = None,
     ) -> Page:
-        """Alias for update_page following CMD-43 naming convention."""
+        """Alias for update_page with alternative naming convention."""
         return self.update_page(
             page_id=page_id,
             html_storage=html_storage,

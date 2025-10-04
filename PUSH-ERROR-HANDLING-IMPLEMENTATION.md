@@ -118,9 +118,9 @@ Implemented comprehensive test suite (`tests/test_push_error_handling.py`) cover
 ### CLI Integration
 
 - Added `push` subcommand to main CLI parser
-- Integrated with existing mapping store (CMD-45)
-- Uses Confluence API client (CMD-43)
-- Uses markdown converter (CMD-44)
+- Integrated with existing mapping store
+- Uses Confluence API client
+- Uses markdown converter
 
 ### Environment Variables
 
@@ -130,9 +130,9 @@ Implemented comprehensive test suite (`tests/test_push_error_handling.py`) cover
 
 ### Dependencies
 
-- Builds on CMD-43 (Confluence API)
-- Integrates with CMD-45 (Mapping Store)
-- Uses CMD-44 (Markdown Converter)
+- Builds on Confluence API implementation
+- Integrates with mapping store functionality
+- Uses markdown converter system
 
 ## Acceptance Criteria Status
 
