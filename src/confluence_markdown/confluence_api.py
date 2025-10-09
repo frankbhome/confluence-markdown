@@ -106,15 +106,48 @@ class ConfluenceClient:
 
     @classmethod
     def from_env(cls) -> ConfluenceClient:
-        base_url = os.getenv("CMT_CONF_BASE_URL", "").strip()
-        email = os.getenv("CMT_CONF_EMAIL", "").strip() or None
-        token = os.getenv("CMT_CONF_TOKEN", "").strip() or None
+        """Create a client from environment variables with fallback names.
+
+        Primary environment variable names use the CMT_CONF_* prefix. For convenience
+        (and to integrate with existing Confluence automation setups) we also fall back
+        to commonly used variable names if the primary ones are not set:
+
+        - CMT_CONF_BASE_URL -> CONFLUENCE_URL / ATLASSIAN_URL
+        - CMT_CONF_EMAIL    -> CONFLUENCE_USER
+        - CMT_CONF_TOKEN    -> CONFLUENCE_TOKEN / ATLASSIAN_TOKEN
+
+        Returns:
+            Configured ConfluenceClient instance
+        """
+        # Read primary vars first
+        base_url: str = os.getenv("CMT_CONF_BASE_URL", "").strip()
+        email: str | None = os.getenv("CMT_CONF_EMAIL", "").strip() or None
+        token: str | None = os.getenv("CMT_CONF_TOKEN", "").strip() or None
+
+        # Fallbacks only if primary is empty
+        if not base_url:
+            base_url = (os.getenv("CONFLUENCE_URL") or os.getenv("ATLASSIAN_URL") or "").strip()
+        if not email:
+            email = os.getenv("CONFLUENCE_USER", "").strip() or None
+        if not token:
+            token = (
+                os.getenv("CONFLUENCE_TOKEN") or os.getenv("ATLASSIAN_TOKEN") or ""
+            ).strip() or None
+
+        # Normalize blanks to None for optional fields (already handled above)
         return cls(base_url=base_url, email=email, token=token)
 
     def _url(self, path: str) -> str:
+        """Construct an absolute Confluence REST API URL for a relative path."""
         return f"{self.base_url}{path}"
 
     def _handle_error(self, resp: requests.Response, context: str) -> None:
+        """Raise rich error types for non-success HTTP responses.
+
+        Args:
+            resp: Raw ``requests`` response to inspect.
+            context: Friendly operation description to include in error text.
+        """
         status = resp.status_code
         try:
             payload = resp.json()
@@ -144,15 +177,15 @@ class ConfluenceClient:
     def _resolve_version_and_title(
         self, page_id: str, expected_version: int | None, title: str | None
     ) -> tuple[int, str]:
-        """Resolve target version and title for page updates.
+        """Resolve the next page version number and update title prior to PUT.
 
         Args:
-            page_id: Confluence page ID
-            expected_version: Expected current version for optimistic locking (if None, fetches current)
-            title: New title (if None or falsy, fetches current title)
+            page_id: Confluence page identifier being updated.
+            expected_version: Current version the caller believes is stored.
+            title: Optional new page title provided by caller.
 
         Returns:
-            Tuple of (target_version, resolved_title) where target_version is ready for API call
+            Tuple containing the calculated target version and resolved title.
         """
         if expected_version is None:
             logger.info(
@@ -470,6 +503,7 @@ class ConfluenceClient:
         html_storage: str,
         title: str | None = None,
         expected_version: int | None = None,
+        parent_id: str | None = None,
     ) -> Page:
         """Update an existing Confluence page with optimistic concurrency control.
 
@@ -518,13 +552,16 @@ class ConfluenceClient:
                 },
             )
 
-            payload = {
+            payload: dict[str, Any] = {
                 "id": page_id,
                 "type": "page",
                 "title": title,
                 "version": {"number": expected_version},
                 "body": {"storage": {"value": html_storage, "representation": "storage"}},
             }
+            # Include ancestors if parent_id provided (allows re-parenting/moving page)
+            if parent_id:
+                payload["ancestors"] = [{"id": parent_id}]
 
             resp = self.session.put(
                 self._url(f"/rest/api/content/{page_id}"),
