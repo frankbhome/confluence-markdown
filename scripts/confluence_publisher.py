@@ -112,16 +112,18 @@ class ConfluencePublisher:
         for md_file in repo_root.rglob("*.md"):
             relative_path = md_file.relative_to(repo_root)
 
-            # Check exclusion patterns
-            should_exclude = any(relative_path.match(pattern) for pattern in exclude_patterns)
-
-            # Check inclusion patterns if specified
-            should_include = True
+            include_match = False
             if include_patterns:
-                should_include = any(relative_path.match(pattern) for pattern in include_patterns)
+                include_match = any(relative_path.match(pattern) for pattern in include_patterns)
+                if not include_match:
+                    continue
 
-            if not should_exclude and should_include:
-                markdown_files.append(md_file)
+            if not include_match:
+                should_exclude = any(relative_path.match(pattern) for pattern in exclude_patterns)
+                if should_exclude:
+                    continue
+
+            markdown_files.append(md_file)
 
         return sorted(markdown_files)
 
