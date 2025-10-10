@@ -1,5 +1,6 @@
 import types
 from pathlib import Path
+from typing import Optional
 
 import pytest
 
@@ -418,7 +419,7 @@ class StubConfluenceClient:
         title: str,
         html_storage: str,
         parent_id: str,
-        labels: list[str] | None = None,
+        labels: Optional[list[str]] = None,
     ):
         self.created.append((space_key, title, html_storage, parent_id, tuple(labels or [])))
 
