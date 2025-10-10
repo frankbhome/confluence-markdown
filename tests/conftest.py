@@ -1,3 +1,5 @@
+from typing import Optional
+
 import pytest
 
 
@@ -30,7 +32,7 @@ class StubClient:
     ):
         self.created.append((space_key, title, html_storage, parent_id, tuple(labels or ())))
 
-    def update_page(self, *, page_id: str, html_storage: str, title: str | None = None):
+    def update_page(self, *, page_id: str, html_storage: str, title: Optional[str] = None):
         self.updated.append((page_id, html_storage, title))
 
 
