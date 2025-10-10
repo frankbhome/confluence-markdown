@@ -11,7 +11,7 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_DIR.parent / "src"))
 
-from confluence_markdown.confluence_api import ConfluenceClient  # noqa: E402
+from confluence_markdown.confluence_api import ConfluenceClient, NotFoundError  # noqa: E402
 from confluence_markdown.converter import MarkdownToConfluenceConverter  # noqa: E402
 from scripts.common import create_page_title, find_repository_root  # noqa: E402
 
@@ -185,10 +185,15 @@ def main():
             # Create page title
             page_title = create_page_title(md_file, repo_root=repo_root)
 
-            # Check if page already exists
             try:
                 existing_page = client.get_page_by_title(space_key=space_key, title=page_title)
-                # Update existing page
+            except NotFoundError:
+                existing_page = None
+            except Exception:  # pragma: no cover - defensive log path
+                logger.exception("Failed to look up page '%s'", page_title)
+                raise
+
+            if existing_page:
                 client.update_page(
                     page_id=existing_page.id,
                     html_storage=confluence_html,
@@ -196,9 +201,7 @@ def main():
                     parent_id=parent_page_id,
                 )
                 print(f"   ✅ Updated: {page_title}")
-
-            except Exception:
-                # Create new page
+            else:
                 client.create_page(
                     space_key=space_key,
                     title=page_title,
