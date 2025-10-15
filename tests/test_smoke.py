@@ -56,6 +56,8 @@ def test_main_module_if_name_main():
     with patch("sys.stderr", new_callable=StringIO) as mock_stderr:
         # Mock sys.argv to simulate command line execution
         with patch.object(sys, "argv", ["confluence_markdown.__main__"]):
+            # Remove cached module so run_module executes cleanly without runtime warnings.
+            sys.modules.pop("confluence_markdown.__main__", None)
             try:
                 # Use runpy to execute the module as if it was run with python -m
                 runpy.run_module("confluence_markdown.__main__", run_name="__main__")
