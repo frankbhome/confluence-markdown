@@ -92,7 +92,8 @@ def create_page_title(path: Path, *, repo_root: Path | None = None) -> str:
 
     try:
         relative_path = path.resolve().relative_to(repo_root)
-    except Exception:
+    except ValueError:
+        # relative_to raises ValueError when path is not relative to repo_root
         relative_path = Path(path.name)
 
     parts = relative_path.parts
@@ -115,7 +116,8 @@ def _normalise_key(path: Path) -> str:
         repo_root = find_repository_root()
         relative = path.resolve().relative_to(repo_root)
         return relative.as_posix()
-    except Exception:
+    except ValueError:
+        # relative_to raises ValueError when path is not relative to repo_root
         return path.as_posix().lstrip("./")
 
 
@@ -180,8 +182,10 @@ def _publish_single(
     except ConfluenceAPIError as exc:  # pragma: no cover - defensive logging
         logger.error("Confluence API error for %s: %s", path, exc)
         return PublishOutcome(path=path, action="skipped", status="failure", detail=str(exc))
+    except (KeyboardInterrupt, SystemExit):
+        raise
     except Exception as exc:  # pragma: no cover - defensive logging
-        logger.exception("Unexpected failure publishing %s", path)
+        logger.exception("Unexpected failure publishing %s (%s)", path, type(exc).__name__)
         return PublishOutcome(path=path, action="skipped", status="failure", detail=str(exc))
 
 

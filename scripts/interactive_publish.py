@@ -41,9 +41,12 @@ def _prompt_selection(count: int, input_func=input) -> List[int]:
     """Prompt the user to choose one or more documents by menu index."""
 
     while True:
-        raw = input_func("Select documents (comma separated), 'a' for all, or 'q' to quit: ")
-        if raw is None:
+        try:
+            raw = input_func("Select documents (comma separated), 'a' for all, or 'q' to quit: ")
+        except EOFError:
+            # User triggered EOF (Ctrl+D/Ctrl+Z); treat as quit
             return []
+
         choice = raw.strip().lower()
         if not choice:
             print("No selection made; choose at least one entry or 'q' to quit.")

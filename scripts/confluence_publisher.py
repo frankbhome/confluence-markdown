@@ -3,6 +3,9 @@
 
 This script provides an interactive interface to publish all repository markdown files
 to your Confluence space as documentation pages with enhanced error handling and progress tracking.
+
+Note: This script must be run from the repository root or with PYTHONPATH=src so that
+confluence_markdown imports resolve correctly.
 """
 
 import argparse
@@ -13,13 +16,13 @@ import sys
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from scripts.common import create_page_title, find_repository_root
-
-# Add src to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-
-from confluence_markdown.confluence_api import ConfluenceClient, NotFoundError
+from confluence_markdown.confluence_api import (
+    ConfluenceAPIError,
+    ConfluenceClient,
+    NotFoundError,
+)
 from confluence_markdown.converter import MarkdownToConfluenceConverter
+from scripts.common import create_page_title, find_repository_root
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -162,7 +165,7 @@ class ConfluencePublisher:
                     )
                 except NotFoundError:
                     existing_page = None
-                except Exception as lookup_error:
+                except ConfluenceAPIError as lookup_error:
                     logger.error("Failed to look up page '%s': %s", page_title, lookup_error)
                     raise
 
@@ -307,9 +310,8 @@ def main():
         sys.exit(1)
 
     print(f"\n📄 Found {len(markdown_files)} markdown files:")
-    repo_root = Path(__file__).parent.parent
     for i, md_file in enumerate(markdown_files[:5], 1):
-        relative_path = md_file.relative_to(repo_root)
+        relative_path = md_file.relative_to(publisher.repo_root)
         print(f"   {i}. {relative_path}")
     if len(markdown_files) > 5:
         print(f"   ... and {len(markdown_files) - 5} more")

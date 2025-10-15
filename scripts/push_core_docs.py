@@ -11,7 +11,11 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_DIR.parent / "src"))
 
-from confluence_markdown.confluence_api import ConfluenceClient, NotFoundError  # noqa: E402
+from confluence_markdown.confluence_api import (  # noqa: E402
+    ConfluenceAPIError,
+    ConfluenceClient,
+    NotFoundError,
+)
 from confluence_markdown.converter import MarkdownToConfluenceConverter  # noqa: E402
 from scripts.common import create_page_title, find_repository_root  # noqa: E402
 
@@ -189,8 +193,8 @@ def main():
                 existing_page = client.get_page_by_title(space_key=space_key, title=page_title)
             except NotFoundError:
                 existing_page = None
-            except Exception:  # pragma: no cover - defensive log path
-                logger.exception("Failed to look up page '%s'", page_title)
+            except ConfluenceAPIError as exc:  # pragma: no cover - defensive log path
+                logger.exception("Failed to look up page '%s': %s", page_title, exc)
                 raise
 
             if existing_page:
