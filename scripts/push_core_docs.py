@@ -92,8 +92,23 @@ def get_core_markdown_files():
 
 def convert_markdown_to_confluence(md_file_path):
     """Convert a markdown file to Confluence storage format."""
-    with open(md_file_path, encoding="utf-8") as f:
-        markdown_content = f.read()
+    try:
+        with open(md_file_path, encoding="utf-8") as f:
+            markdown_content = f.read()
+    except FileNotFoundError as e:
+        msg = f"Markdown file not found: {md_file_path}"
+        logger.error("%s: %s", msg, e)
+        # Re-raise with context so callers can handle gracefully
+        raise FileNotFoundError(msg) from e
+    except PermissionError as e:
+        msg = f"Permission denied reading markdown file: {md_file_path}"
+        logger.error("%s: %s", msg, e)
+        # Re-raise with context so callers can handle gracefully
+        raise PermissionError(msg) from e
+    except Exception as e:  # pragma: no cover - defensive fallback
+        # Log full stack trace and re-raise to be handled by caller
+        logger.exception("Unexpected error reading markdown file '%s': %s", md_file_path, e)
+        raise
 
     converter = MarkdownToConfluenceConverter()
     confluence_html = converter.convert(markdown_content)
