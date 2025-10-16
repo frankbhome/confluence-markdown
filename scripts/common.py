@@ -216,9 +216,26 @@ def publish_documents(
     converter = converter or MarkdownToConfluenceConverter()
 
     outcomes: List[PublishOutcome] = []
+    # Enforce repository-root containment for any provided paths
+    repo_root = find_repository_root()
 
     for raw_path in paths:
         path = Path(raw_path)
+        # Resolve and ensure the path stays within the repository root to avoid traversal
+        try:
+            resolved = path.resolve(strict=False)
+            resolved.relative_to(repo_root)
+        except ValueError:
+            logger.warning("Skipping %s: path is outside repository", path)
+            outcomes.append(
+                PublishOutcome(
+                    path=path,
+                    action="skipped",
+                    status="skipped",
+                    detail="Path outside repository",
+                )
+            )
+            continue
         if not path.exists():
             logger.warning("Skipping %s: file does not exist", path)
             outcomes.append(
