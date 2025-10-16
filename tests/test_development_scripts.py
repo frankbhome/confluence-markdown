@@ -148,6 +148,9 @@ def test_publish_documents_rejects_path_outside_repository(
     assert outcomes[0].status == "skipped"
     assert outcomes[0].detail == "Path outside repository"
     assert outcomes[0].path == outside_file
+    # Verify no operations were attempted on the client
+    assert stub_client.created == []
+    assert stub_client.updated == []
 
 
 def test_default_markdown_paths_returns_repo_relative(repo):
