@@ -234,7 +234,7 @@ def main():
 
         except Exception as e:
             print(f"   ❌ Failed: {e}")
-            logger.exception(f"Failed to process {relative_path}")
+            logger.exception("Failed to process %s", relative_path)
             error_count += 1
 
     # Summary
