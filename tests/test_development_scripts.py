@@ -121,6 +121,38 @@ def test_publish_documents_requires_mapping(repo, stub_client, stub_converter):
     assert outcomes[0].detail == "No mapping found"
 
 
+def test_publish_documents_rejects_path_outside_repository(
+    repo, tmp_path, stub_client, stub_converter
+):
+    """Ensure paths outside the repo root are rejected with proper status and detail."""
+    mapping_store = common.MappingStore(mapping_file=repo / ".cmt" / "map.json")
+
+    # Create a file outside the repository root
+    outside_dir = tmp_path / "outside"
+    outside_dir.mkdir(parents=True, exist_ok=True)
+    outside_file = outside_dir / "outside.md"
+    outside_file.write_text("external content", encoding="utf-8")
+
+    # Add a mapping for the external file (even though it should be rejected)
+    mapping_store.add_mapping(str(outside_file), space_key="EXT", title="External")
+
+    outcomes = common.publish_documents(
+        [outside_file],
+        mapping_store=mapping_store,
+        client=stub_client,
+        converter=stub_converter,
+        dry_run=False,
+    )
+
+    assert len(outcomes) == 1
+    assert outcomes[0].status == "skipped"
+    assert outcomes[0].detail == "Path outside repository"
+    assert outcomes[0].path == outside_file
+    # Verify no operations were attempted on the client
+    assert stub_client.created == []
+    assert stub_client.updated == []
+
+
 def test_default_markdown_paths_returns_repo_relative(repo):
     mapping_store = common.MappingStore(mapping_file=repo / ".cmt" / "map.json")
     target = repo / "docs" / "path.md"

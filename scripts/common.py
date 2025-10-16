@@ -216,39 +216,64 @@ def publish_documents(
     converter = converter or MarkdownToConfluenceConverter()
 
     outcomes: List[PublishOutcome] = []
+    # Enforce repository-root containment for any provided paths
+    repo_root = find_repository_root()
 
     for raw_path in paths:
         path = Path(raw_path)
-        if not path.exists():
-            logger.warning("Skipping %s: file does not exist", path)
+        original_path = path
+        # Resolve and ensure the path stays within the repository root to avoid traversal
+        try:
+            resolved = path.resolve(strict=True)
+            resolved.relative_to(repo_root)
+        except FileNotFoundError:
+            logger.warning("Skipping %s: file does not exist", original_path)
             outcomes.append(
                 PublishOutcome(
-                    path=path,
+                    path=original_path,
                     action="skipped",
                     status="skipped",
                     detail="File does not exist",
                 )
             )
             continue
-
-        mapping = _resolve_mapping(mapping_store, path)
-        if not mapping:
-            message = "No mapping found"
-            logger.warning("%s for %s", message, path)
+        except ValueError:
+            logger.warning("Skipping %s: path is outside repository", original_path)
             outcomes.append(
-                PublishOutcome(path=path, action="skipped", status="skipped", detail=message)
+                PublishOutcome(
+                    path=original_path,
+                    action="skipped",
+                    status="skipped",
+                    detail="Path outside repository",
+                )
             )
             continue
 
-        outcomes.append(
-            _publish_single(
-                path=path,
-                mapping=mapping,
-                client=client,
-                converter=converter,
-                dry_run=dry_run,
-                logger=logger,
+        path = resolved
+        mapping = _resolve_mapping(mapping_store, path)
+        if not mapping:
+            message = "No mapping found"
+            logger.warning("%s for %s", message, original_path)
+            outcomes.append(
+                PublishOutcome(
+                    path=original_path,
+                    action="skipped",
+                    status="skipped",
+                    detail=message,
+                )
             )
+            continue
+
+        outcome = _publish_single(
+            path=path,
+            mapping=mapping,
+            client=client,
+            converter=converter,
+            dry_run=dry_run,
+            logger=logger,
         )
+        # Preserve the user-provided path for reporting consistency
+        outcome.path = original_path
+        outcomes.append(outcome)
 
     return outcomes

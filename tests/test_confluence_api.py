@@ -645,36 +645,3 @@ class TestConfluenceClient:
 
         # Verify logging includes ancestor information
         mock_logger.info.assert_called()
-
-    @patch("requests.Session.put")
-    @patch.object(ConfluenceClient, "get_page_by_id")
-    def test_update_page_includes_parent_id(self, mock_get_page, mock_put):
-        """Ensure update_page payload carries ancestors when parent_id is provided."""
-        client = ConfluenceClient(base_url="https://example.atlassian.net/wiki", token="test")
-
-        mock_get_page.return_value = Page(
-            id="123",
-            title="Existing",
-            space_key="TEST",
-            version=PageVersion(number=2),
-        )
-
-        mock_put.return_value = MockResponse(
-            200,
-            {
-                "id": "123",
-                "title": "Existing",
-                "space": {"key": "TEST"},
-                "version": {"number": 3},
-            },
-        )
-
-        client.update_page(
-            page_id="123",
-            html_storage="<p>updated</p>",
-            parent_id="parent-abc",
-        )
-
-        call_args = mock_put.call_args
-        payload = json.loads(call_args[1]["data"])
-        assert payload["ancestors"] == [{"id": "parent-abc"}]

@@ -180,3 +180,6 @@ __marimo__/
 # IDEs and editors
 .vscode/
 .idea/
+
+# Local Codex/MCP configurations
+.codex/
