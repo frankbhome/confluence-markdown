@@ -77,7 +77,7 @@ jobs:
           fi
 
       - name: Upload vulnerability reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: vulnerability-reports
@@ -172,7 +172,7 @@ jobs:
           poetry run pip-licenses --format=markdown >> license-compliance-report.md
 
       - name: Upload license reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: license-reports
@@ -262,7 +262,7 @@ jobs:
           EOF
 
       - name: Upload SBOM artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: sbom-artifacts
@@ -384,7 +384,7 @@ jobs:
           EOF
 
       - name: Upload final pipeline artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: security-pipeline-artifacts-${{ github.run_id }}
           path: final-artifacts/
@@ -522,7 +522,7 @@ jobs:
           EOF
 
       - name: Upload documentation
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: pipeline-documentation
           path: final-artifacts/PIPELINE-FAILURE-CONDITIONS.md
